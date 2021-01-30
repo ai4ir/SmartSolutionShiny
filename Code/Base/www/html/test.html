@@ -1,0 +1,458 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-1">
+      <button id="fileDomain" type="button" class="btn btn-default action-button">파일</button>
+    </div>
+    <div class="col-sm-1">
+      <button id="renderReportSampling" type="button" class="btn btn-default action-button">리포트</button>
+    </div>
+    <div class="col-sm-1">
+      <button id="renderReportCommonSample" type="button" class="btn btn-default action-button">범용 리포트</button>
+    </div>
+    <div class="col-sm-1">
+      <button id="domainFromSource" type="button" class="btn btn-default action-button">소스 도메인</button>
+    </div>
+    <div class="col-sm-2">
+      <h4> &lt;- 영역 선정 버튼 ::::::: 영역 처리 버튼 -&gt;</h4>
+    </div>
+    <div class="col-sm-2">
+      <button id="initCurSampleExplore" type="button" class="btn btn-default action-button">데이타 초기화</button>
+    </div>
+    <div class="col-sm-2">
+      <button id="areaTreat" type="button" class="btn btn-default action-button">영역 처리</button>
+    </div>
+    <div class="col-sm-1">
+      <button id="remainVar" type="button" class="btn btn-default action-button">변수 선정</button>
+    </div>
+    <div class="col-sm-1">
+      <button id="calcMeanDesign" type="button" class="btn btn-default action-button">설계용 평균</button>
+    </div>
+  </div>
+  <hr/>
+  <div class="row">
+    <div class="col-sm-3">
+      <div class="row" title="catVarContentExplore">
+        <div class="col-sm-4">
+          <div id="am" class="form-group shiny-input-checkboxgroup shiny-input-container">
+            <label class="control-label" for="am">변속기 :</label>
+            <div class="shiny-options-group">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="am" value="ALL" checked="checked"/>
+                  <span>ALL</span>
+                </label>
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="am" value="0"/>
+                  <span>자동</span>
+                </label>
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="am" value="1"/>
+                  <span>수동</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div id="vs" class="form-group shiny-input-checkboxgroup shiny-input-container">
+            <label class="control-label" for="vs">엔진 모양 :</label>
+            <div class="shiny-options-group">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="vs" value="ALL" checked="checked"/>
+                  <span>ALL</span>
+                </label>
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="vs" value="0"/>
+                  <span>V 형</span>
+                </label>
+              </div>
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="vs" value="1"/>
+                  <span>일자형</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <button id="selCatExplore1" type="button" class="btn btn-default action-button">Species</button>
+          <button id="selCatExplore2" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore3" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore4" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore5" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore6" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore7" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore8" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore9" type="button" class="btn btn-default action-button">NA</button>
+          <button id="selCatExplore10" type="button" class="btn btn-default action-button">NA</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-9">
+      <style type="text/css">.DomainExploreTable {
+    width : 1200px;
+}
+#nameFileDomain {
+    width: 900px;
+}
+#nameFileDomain .radio {
+    float: left;
+    margin: 10px;
+}
+
+#ModalSelCatVarExplore {
+    width: 1200px;
+}
+#ModalSelCatVarExplore .checkbox {
+    float: left;
+    margin: 10px;
+}
+
+
+#ModalExploreDWTT {
+    width: 1200px;
+}
+#ModalExploreDWTT .checkbox {
+    float: left;
+    margin: 10px;
+}
+
+/*
+#ModalSelCatVarExplore * {
+    float: left;
+    margin: 10px;
+}
+    
+
+
+
+.checkbox  {
+    float: left;
+    margin: 10px;
+}
+
+
+#DomainExploreCheckbox  {
+    float: left;
+    width: 230px; 
+    margin: 10px;
+}
+
+*/
+#DomainTable1 table {
+    float: left;
+    width: 230px; 
+    margin: 10px;
+}
+
+#DomainTable1 .col1 {
+    width : 30px; 
+}
+#DomainTable1 .col2 {
+    width : 100px; 
+}
+#DomainTable1 .col3 {
+    width : 100px; 
+}
+
+#DomainTable2 table {
+    float: left;
+    width: 230px; 
+    margin: 10px ;
+}
+
+#DomainTable2 .col1 {
+    width : 30px; 
+}
+#DomainTable2 .col2 {
+    width : 100px; 
+}
+#DomainTable2 .col3 {
+    width : 100px; 
+}
+
+#DomainTable3 table {
+    float: left;
+    width: 230px; 
+    margin: 10px ;
+}
+
+#DomainTable3 .col1 {
+    width : 30px; 
+}
+#DomainTable3 .col2 {
+    width : 100px; 
+}
+#DomainTable3 .col3 {
+    width : 100px; 
+}
+
+/*
+
+
+.OtherDesignTable table {
+    position : absolute;
+    top : 0;
+    left : 300px;
+    width : 200px; 
+}
+
+
+
+.OtherDesignTable .col1 {
+    width : 80px; 
+}
+
+*/</style>
+      <div class="col-sm-12"><div class="DomainExploreTable">
+<!-- 
+    <div id="DomainExploreCheckbox">
+        <div id="SPCLoc" class="form-group shiny-input-checkboxgroup shiny-input-container">
+            <p> 채취 위치 <br />
+                <input type="checkbox" name="SPCLoc" value="T" /> 선단부
+                <input type="checkbox" name="SPCLoc" value="M" /> 중앙부
+                <input type="checkbox" name="SPCLoc" value="B" checked="checked" /> 후단부
+            </p> <br /> <br /> 
+        </div>
+        
+        <div id="TS_SPCLoc" class="form-group shiny-input-checkboxgroup shiny-input-container">
+            <p> 채취 방향 <br />
+                <input type="checkbox" name="TS_SPCLoc" value="C" /> C
+                <input type="checkbox" name="TS_SPCLoc" value="L" /> L
+                <input type="checkbox" name="TS_SPCLoc" value="R" /> R
+            </p>
+        </div>
+        
+        <div id="SelGangJongCheckbox">
+            
+        </div>
+    </div>
+ -->  
+    
+    
+    <div id="DomainTable1">
+        <table>
+            <tr>
+                <th id="DomainTable1Head1" class="col1"> </th>
+                <th id="DomainTable1Head2" class="col2"> </th>
+                <th id="DomainTable1Head3" class="col3"> </th>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name1"></td>
+    	        <td><input id="minDomTable1Cell1" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell1" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name2"></td>
+    	        <td><input id="minDomTable1Cell2" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell2" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name3"></td>
+    	        <td><input id="minDomTable1Cell3" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell3" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name4"></td>
+    	        <td><input id="minDomTable1Cell4" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell4" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name5"></td>
+    	        <td><input id="minDomTable1Cell5" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell5" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name6"></td>
+    	        <td><input id="minDomTable1Cell6" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell6" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name7"></td>
+    	        <td><input id="minDomTable1Cell7" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell7" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name8"></td>
+    	        <td><input id="minDomTable1Cell8" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell8" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name9"></td>
+    	        <td><input id="minDomTable1Cell9" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell9" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name10"></td>
+    	        <td><input id="minDomTable1Cell10" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell10" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name11"></td>
+    	        <td><input id="minDomTable1Cell11" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell11" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable1Name12"></td>
+    	        <td><input id="minDomTable1Cell12" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable1Cell12" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+
+        </table>
+    </div>
+    
+    <div id="DomainTable2">
+        <table>
+            <tr>
+                <th id="DomainTable2Head1" class="col1"> </th>
+                <th id="DomainTable2Head2" class="col2"> </th>
+                <th id="DomainTable2Head3" class="col3"> </th>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name1"></td>
+    	        <td><input id="minDomTable2Cell1" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell1" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name2"></td>
+    	        <td><input id="minDomTable2Cell2" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell2" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name3"></td>
+    	        <td><input id="minDomTable2Cell3" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell3" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name4"></td>
+    	        <td><input id="minDomTable2Cell4" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell4" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name5"></td>
+    	        <td><input id="minDomTable2Cell5" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell5" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name6"></td>
+    	        <td><input id="minDomTable2Cell6" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell6" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name7"></td>
+    	        <td><input id="minDomTable2Cell7" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell7" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name8"></td>
+    	        <td><input id="minDomTable2Cell8" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell8" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name9"></td>
+    	        <td><input id="minDomTable2Cell9" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell9" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name10"></td>
+    	        <td><input id="minDomTable2Cell10" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell10" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name11"></td>
+    	        <td><input id="minDomTable2Cell11" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell11" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable2Name12"></td>
+    	        <td><input id="minDomTable2Cell12" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable2Cell12" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div id="DomainTable3">
+        <table>
+            <tr>
+                <th id="DomainTable3Head1" class="col1"> </th>
+                <th id="DomainTable3Head2" class="col2"> </th>
+                <th id="DomainTable3Head3" class="col3"> </th>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name1"></td>
+    	        <td><input id="minDomTable3Cell1" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell1" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name2"></td>
+    	        <td><input id="minDomTable3Cell2" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell2" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name3"></td>
+    	        <td><input id="minDomTable3Cell3" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell3" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name4"></td>
+    	        <td><input id="minDomTable3Cell4" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell4" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name5"></td>
+    	        <td><input id="minDomTable3Cell5" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell5" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name6"></td>
+    	        <td><input id="minDomTable3Cell6" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell6" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name7"></td>
+    	        <td><input id="minDomTable3Cell7" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell7" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name8"></td>
+    	        <td><input id="minDomTable3Cell8" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell8" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name9"></td>
+    	        <td><input id="minDomTable3Cell9" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell9" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name10"></td>
+    	        <td><input id="minDomTable3Cell10" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell10" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name11"></td>
+    	        <td><input id="minDomTable3Cell11" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell11" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+            <tr>
+    	        <td id="DomainTable3Name12"></td>
+    	        <td><input id="minDomTable3Cell12" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+    	        <td><input id="maxDomTable3Cell12" type="number" class="form-control"  value="" min="" max="" step=""/>  </td>
+            </tr>
+
+        </table>
+    </div>
+
+
+</div>
+
+</div>
+    </div>
+  </div>
+</div>

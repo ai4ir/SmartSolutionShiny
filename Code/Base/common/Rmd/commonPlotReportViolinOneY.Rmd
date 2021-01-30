@@ -1,0 +1,438 @@
+---
+title: "Violin with Lasso Selection"
+author: "C.S.Lee(ai4ir@daum.net, 010-5508-7437)"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    aesList: NA
+    aesListScatter: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+### 내부 디버깅 ###
+# df <- curSampleExplore
+# orderedVF <- orderVFcluster(df)
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+aesListScatter <- params$aesListScatter ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+pValueVector <- aesList[["pValueVector"]] 
+orderedVF <- as.data.frame(pValueVector)
+orderedNames <- rownames(orderedVF)
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+
+
+
+renderScatterPlot <- function(x, y, color=NULL, size=NULL, shape=NULL, tooltip = NULL, data_id=NULL) {
+  # x="wt"; y="mpg"; color="cyl"
+    dfGraph <- df[,c(x,y,color, size, shape,tooltip, data_id)] 
+    
+    if(!is.null(color)) {
+      if(length(dfGraph[,color])<10)
+        dfGraph[,color] <- as.factor(dfGraph[,color])
+      
+      dfGraph[,size] <- as.factor(dfGraph[,size])
+      dfGraph[,shape] <- as.factor(dfGraph[,shape])
+      if(!is.factor(dfGraph[,color])  && length(unique(dfGraph[,color])) < 6 && x!=color) {
+        dfGraph[,color] <- as.factor(dfGraph[,color])
+      }
+      
+    }
+
+
+    # fitting  
+    labelAnnotate <- NULL
+    if(!is.Date(dfGraph[,x]) & !is.Date(dfGraph[,y]) & !is.POSIXct(dfGraph[,x]) & !is.POSIXct(dfGraph[,y])) {
+        dfModel <- dfGraph[,c(x, y)]
+        colnames(dfModel) <- c("xVec", "yVec")
+        switch(aesList[["fitOption"]],
+               NoFit = {},
+               Fit1 = {
+                   model <- lm(yVec ~ xVec,data=dfModel)
+                   myfunc <- function(x) {
+                       model[["coefficients"]][1] + model[["coefficients"]][2] * x 
+                   }
+                   R2 <- broom::glance(model)[["r.squared"]]
+                   labelAnnotate <- paste0("R2 : ", round(R2,3))
+                   xAnnotate <-  min(dfGraph[,x],na.rm=TRUE) +
+                       0.8*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
+               },
+               Fit2 = {
+                   dfModel <- dfModel %>% mutate(xVec2 = xVec * xVec)
+                   model <- lm(yVec ~ xVec + xVec2,data=dfModel)
+                   myfunc <- function(x) {
+                       model[["coefficients"]][1] + model[["coefficients"]][2] * x + model[["coefficients"]][3]*x*x
+                   }
+                   R2 <- broom::glance(model)[["r.squared"]]
+                   labelAnnotate <- paste0("R2 : ", round(R2,3))
+                   xAnnotate <-  min(dfGraph[,x],na.rm=TRUE) +
+                       0.8*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
+
+               },
+               {}
+        )
+
+    }
+    if(is.null(tooltip)) {
+      tooltip <- "tooltip"
+      dfGraph <- dfGraph %>% mutate(tooltip=paste(as.character(dfGraph[,y]), "\n", dfGraph[,x], "\n",
+                                          dfGraph[,color], "\n", dfGraph[,data_id]))
+    }
+    
+
+    if(!is.null(color) & !is.numeric(dfGraph[,color]) & 
+       length(unique(dfGraph[,color])) > 20 )
+    {
+      kk <- table(dfGraph[,color])
+      kk <- kk[order(kk, decreasing=TRUE)]
+      kk <- kk[1:20]
+      dfGraph[,color] <- ifelse(dfGraph[,color] %in% names(kk), 
+             dfGraph[,color], "기타"
+             )
+    }
+
+    gg1 <- ggplot(dfGraph) + labs(x=attr(dfGraph[,x], "label"), y=attr(dfGraph[,y], "label")) +
+      geom_point_interactive(aes_string(x = x, y=y, color = color, size=size, shape=shape,
+                                      tooltip = tooltip, data_id = data_id), size = 1) +
+      guides(color = guide_legend(override.aes = list(size = 1))) + 
+      theme(legend.title = element_text(size = 8),
+            legend.text  = element_text(size = 6)
+            # legend.key.size = unit(0.1, "lines")
+            )
+    
+    if(!is.null(labelAnnotate)) {
+        gg1 <- gg1 +  stat_function(fun=myfunc, geom="line", color="black") +
+            annotate("text",
+                     x=xAnnotate, 
+                     y=min(dfGraph[,y], na.rm=TRUE), label=labelAnnotate, color="black", size=2)
+    }
+
+
+    gg1  
+    # girafe( code = print(gg1), width_svg = 8, height_svg = 4)
+}
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Cluster Summary  
+ - [Graph] page  
+ - [clusterVF] page  
+ 
+Violin   
+ - [Violin1] page  
+ - [Violin2] page  
+ - [Violin3] page  
+ - [Violin4] page  
+ - [Violin5] page  
+ - [Violin6] page  
+ - [Violin7] page  
+ - [Violin8] page  
+ - [Violin9] page  
+ - [Violin10] page   
+
+ 
+
+Graph{data-navmenu="Cluster Summary "}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, summary1}
+if(!is.na(aesListScatter[["x"]]) & !is.na(aesListScatter[["y"]]) )
+  renderScatterPlot(x=aesListScatter[["x"]], y=aesListScatter[["y"]], color=aesListScatter[["color"]])
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+clusterVF{data-navmenu="Cluster Summary "}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, table2}
+DT::datatable(orderedVF)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin1{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin1}
+renderViolinPlot <- function(x, y, color=NULL, size=NULL, shape=NULL, tooltip = NULL, data_id=NULL) {
+  # x="cyl"; y="mpg"; color=NULL;size=NULL; shape=NULL;tooltip = NULL; data_id=NULL;
+  # dfGraph <- curSampleExplore
+    dfGraph <- df[,c(x,y,color, size, shape,tooltip, data_id)]
+    labelShort <- attr(dfGraph[,x],"labelShort")
+    dfGraph[,x] <- as.factor(dfGraph[,x])   ### x가 factor여야 바이올린이 분할되어 그려짐.
+    attr(dfGraph[,x], "labelShort") <- labelShort
+    if(!is.null(color)) {
+      if(length(dfGraph[,color])<10)
+        dfGraph[,color] <- as.factor(dfGraph[,color])
+      
+      dfGraph[,size] <- as.factor(dfGraph[,size])
+      dfGraph[,shape] <- as.factor(dfGraph[,shape])
+      if( !is.factor(dfGraph[,color])  && length(unique(dfGraph[,color])) < 6 && x!=color) {
+        dfGraph[,color] <- as.factor(dfGraph[,color])
+      }
+      
+      if(!is.numeric(dfGraph[,color]) & 
+         length(unique(dfGraph[,color])) > 20 )
+      {
+        kk <- table(dfGraph[,color])
+        kk <- kk[order(kk, decreasing=TRUE)]
+        kk <- kk[1:20]
+        dfGraph[,color] <- ifelse(dfGraph[,color] %in% names(kk), 
+                                  dfGraph[,color], "기타"
+        )
+      }
+      
+    }
+    
+    # labelAnnotate <- NULL
+    labelAnnotate <- paste0("pValue(%) : " , round(aesList[["pValueVector"]][x], digits=2))
+        
+    gg1 <- ggplot(dfGraph) + labs(x=attr(dfGraph[,x], "labelShort"), y=attr(dfGraph[,y], "labelShort")) +
+      geom_violin(aes_string(x = x, y=y, color = color, size=size, shape=shape,
+                                      tooltip = tooltip, data_id = data_id)) +
+      # guides(color = guide_legend(override.aes = list(size = 1))) +
+      theme(legend.title = element_text(size = 8),
+            legend.text  = element_text(size = 6)
+            # legend.key.size = unit(0.1, "lines")
+            )
+    
+    if(!is.null(labelAnnotate)) {
+      xAnnotate <- 1
+      gg1 <- gg1 +  
+        annotate("text",
+                 x=xAnnotate,
+                 y=min(dfGraph[,y], na.rm=TRUE), label=labelAnnotate, color="black", size=2)
+    }
+
+
+    gg1  
+    # girafe( code = print(gg1), width_svg = 8, height_svg = 4)
+}
+
+renderViolinPlotSet <- function(xVarNo) {
+  # xVarNo <- 1
+  gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+  if(!is.na(aesList[["x"]][xVarNo]))
+    gg1 <- renderViolinPlot(x=aesList[["x"]][xVarNo], y=aesList[["y"]], color=aesList[["color"]][1])
+  if(!is.na(aesList[["x"]][xVarNo+1]))
+    gg2 <- renderViolinPlot(x=aesList[["x"]][xVarNo+1], y=aesList[["y"]], color=aesList[["color"]])
+  if(!is.na(aesList[["x"]][xVarNo+2]))
+    gg3 <- renderViolinPlot(x=aesList[["x"]][xVarNo+2], y=aesList[["y"]], color=aesList[["color"]])
+  if(!is.na(aesList[["x"]][xVarNo+3]))
+    gg4 <- renderViolinPlot(x=aesList[["x"]][xVarNo+3], y=aesList[["y"]], color=aesList[["color"]])
+
+  # if(!is.na(aesList[["y"]][yVarNo+3]))
+  #   gg4 <- renderViolinPlot(y=aesList[["y"]][yVarNo+3], x=aesList[["color"]], color=aesList[["color"]])
+
+  girafe( ggobj = plot_grid(gg1, gg2,gg3,gg4, ncol=2), width_svg = 8, height_svg = 4)
+  # cowplot::plot_grid(gg1, gg2,gg3,gg4, ncol=2)
+
+  
+}
+
+theme_update(axis.title=element_text(size=10))
+theme_update(axis.text=element_text(size=8))
+
+renderViolinPlotSet(1)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin2{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin2}
+
+renderViolinPlotSet(5)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin3{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin3}
+
+renderViolinPlotSet(9)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin4{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin4}
+
+renderViolinPlotSet(13)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin5{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin5}
+
+renderViolinPlotSet(17)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin6{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin6}
+
+renderViolinPlotSet(21)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin7{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin7}
+
+renderViolinPlotSet(25)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin8{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin8}
+
+renderViolinPlotSet(29)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin9{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin9}
+
+renderViolinPlotSet(33)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Violin10{data-navmenu="Violin"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, Violin10}
+
+renderViolinPlotSet(37)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`

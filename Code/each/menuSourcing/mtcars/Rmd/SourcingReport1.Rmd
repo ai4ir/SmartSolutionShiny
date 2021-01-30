@@ -1,0 +1,238 @@
+---
+title: "mtcars 리포트1"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    DFSource: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+DFSource <- DFSource
+DFSource <- select(DFSource, -sampleCode, -bHOT, -clusterGr)
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Summary Table  
+ - [ContVarTable] page  
+ - [CatVarTable] page  
+ 
+Scatter Plot  
+ - [mpg_disp] page  
+ - [hp_disp] page  
+ 
+
+ 
+
+ContVarTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+No. of Observation : `r NROW(DFSource)`
+No. of variables : `r NCOL(DFSource)`
+
+Row {data-height=485}
+---------------------------------------------
+
+### 
+```{r, contVarTable1}
+summary <- function(x) {
+  funs <- c(min, mean, max, sd)
+  lapply(funs, function(f) f(x, na.rm=TRUE))
+}
+
+dfContVar <- Filter(is.numeric, DFSource)
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+# dfTableContVar <- as.data.frame(lapply(lapply(dfContVar, summary), unlist))
+
+# row.names(dfTableContVar) <- c("최소", "평균", "최대", "편차")
+DT::datatable(dfTableContVar,
+              rownames = c("최소", "평균", "최대", "편차"),
+              colnames = c("displacement"="disp", "horsepower"="hp")) %>%
+  formatRound(c("mpg","displacement","horsepower","drat","wt","qsec"),
+              c(1,1,0,2,3,2)) 
+
+
+```
+
+Row {data-height=485}
+---------------------------------------------
+### 
+```{r, contVarTable2}
+summary <- function(x) {
+  funs <- c(NROW(x))
+}
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+
+DT::datatable(dfTableContVar)
+```
+
+
+CatVarTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=170}
+---------------------------------------------
+
+### 
+```{r, catVarTable1}
+# dfCatVar <- Filter(is.factor, DFSource)
+dfCatVar <- DFSource[,c("cyl", "vs", "am","gear", "carb")]
+catVarNames <- c("cyl", "vs", "am","gear", "carb")
+dfCatVarLevels <- list("cyl", "vs", "am","gear", "carb" )
+names(dfCatVarLevels) <- catVarNames
+for(x in seq_along(catVarNames)) {
+  if(is.factor(DFSource[,x])) {
+    dfCatVarLevels[[x]] <-
+      attr(dfCatVar[,x], "levels")
+  } else {
+    dfCatVarLevels[[x]] <-
+      as.character(unique(dfCatVar[,x]))
+  }
+}
+
+dfTableCatVar <- lapply(dfCatVarLevels,sort) %>% lapply(str_c,collapse=", ") %>%
+  as.data.frame 
+DT::datatable(dfTableCatVar, options=list(dom='t'))
+```
+
+Row {data-height=240}
+---------------------------------------------
+### 
+```{r, catVarTable2}
+renderTableNoRecord <- function(dfGroups) {
+  noRecord <- lapply(dfGroups$.rows, NROW) %>% unlist
+  dfTable <- dfGroups %>% mutate(noRecord=noRecord) %>% select(-.rows) %>% t
+  DT::datatable(dfTable, 
+                options=list(dom='t'))
+                # options=list(dom='t', autoWidth=TRUE, columnDefs=list(list(width='200px'))))
+  
+}
+
+dfGroups <- DFSource %>% group_by(cyl) %>% attr("groups")
+renderTableNoRecord(dfGroups=dfGroups)
+```
+
+### 
+```{r, catVarTable3}
+dfGroups <- DFSource %>% group_by(am) %>% attr("groups")
+renderTableNoRecord(dfGroups=dfGroups)
+```
+
+### 
+```{r, catVarTable4}
+dfGroups <- DFSource %>% group_by(vs) %>% attr("groups")
+renderTableNoRecord(dfGroups=dfGroups)
+```
+
+Row {data-height=240}
+---------------------------------------------
+### 
+```{r, catVarTable5}
+dfGroups <- DFSource %>% group_by(gear) %>% attr("groups")
+renderTableNoRecord(dfGroups=dfGroups)
+```
+
+### 
+```{r, catVarTable6}
+dfGroups <- DFSource %>% group_by(carb) %>% attr("groups")
+renderTableNoRecord(dfGroups=dfGroups)
+```
+
+Row {data-height=320}
+---------------------------------------------
+
+### 
+```{r, catVarTable7}
+dfGroups <- DFSource %>% group_by(am,cyl) %>% attr("groups")
+renderTableNoRecord(dfGroups=dfGroups)
+```
+
+mpg_disp {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, mpg_disp_1}
+renderScatterPlot <- function(x, y, color) {
+    dfGraph <- DFSource %>% select(x,y,color) 
+    dfGraph[,color] <- as.factor(dfGraph[,color])
+    ggplot(dfGraph, aes_string(x=x, y=y, color=color)) + geom_point() 
+}
+renderScatterPlot(x="disp", y="mpg", color="cyl")
+```
+
+### 
+```{r, mpg_disp_2}
+renderScatterPlot(x="disp", y="mpg", color="am")
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, mpg_disp_3}
+renderScatterPlot(x="disp", y="mpg", color="gear")
+```
+
+### 
+```{r, mpg_disp_4}
+renderScatterPlot(x="disp", y="mpg", color="carb")
+```
+
+hp_disp {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, hp_disp_1}
+renderScatterPlot(x="disp", y="hp", color="cyl")
+```
+
+### 
+```{r, hp_disp_2}
+renderScatterPlot(x="disp", y="hp", color="am")
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, hp_disp_3}
+renderScatterPlot(x="disp", y="hp", color="gear")
+```
+
+### 
+```{r, hp_disp_4}
+renderScatterPlot(x="disp", y="hp", color="carb")
+```

@@ -1,0 +1,49 @@
+.DesignTable {
+    width : 1200px;
+}
+
+.DesignTable * {
+    font-size: 20px;
+}
+
+#DesignTable1 table {
+    float: left;
+    width: 230px; 
+    margin: 10px;
+}
+
+#DesignTable1 .col1 {
+    width : 130px; 
+}
+#DesignTable1 .col2 {
+    width : 100px; 
+}
+
+#DesignTable2 table {
+    float: left;
+    width: 230px; 
+    margin: 10px ;
+}
+
+#DesignTable2 .col1 {
+    width : 130px; 
+}
+#DesignTable2 .col2 {
+    width : 100px; 
+}
+
+
+#DesignTable3 table {
+    float: left;
+    width: 230px; 
+    margin: 10px ;
+}
+
+#DesignTable3 .col1 {
+    width : 130px; 
+}
+#DesignTable3 .col2 {
+    width : 100px; 
+}
+
+

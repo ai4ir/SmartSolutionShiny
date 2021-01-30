@@ -1,0 +1,543 @@
+---
+title: "탐색 그래프 Report One Y"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    aesList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+# Sys.setlocale( "LC_ALL", "C")
+knitr::opts_chunk$set(echo=FALSE)
+options(warn=-1)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+if(!library(ggiraph, logical.return=TRUE)) {
+    install.packages("ggiraph")
+    library(ggiraph)
+}
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+### 내부 디버깅 ###
+# df <- dfReportCommon
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+pathHTMLReport <- params$pathHTMLReport  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=10))
+theme_update(axis.text=element_text(size=8))
+# theme_update(legend.text = element_text(size=8))
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+extractCatVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  catVar <- varNameVec[!booleanVec]
+}
+ # df <- dfReportCommon
+aesList[["x"]] <- setdiff(aesList[["x"]], 
+                          c(aesList[["y"]], aesList[["size"]], aesList[["shape"]]))
+
+dfGraph <- as.data.frame(df[,aesList[["x"]]]) 
+
+renderHistogram <- function(xVarNo) {
+    # colnames(dfGraph) <- x
+    gg1 <- ggplot(data=dfGraph,aes_string(x = aesList[["x"]][xVarNo])) +
+      geom_histogram()
+    if(!is.na(attr(df[,aesList[["x"]][xVarNo]], "validMin"))) 
+      gg1 <- gg1 + geom_vline(xintercept=attr(df[,aesList[["x"]][xVarNo]], "validMin"), color="blue") 
+    if(!is.na(attr(df[,aesList[["x"]][xVarNo]], "validMax"))) 
+      gg1 <- gg1 + geom_vline(xintercept=attr(df[,aesList[["x"]][xVarNo]], "validMax"), color="red")
+    gg1
+}
+
+# renderHistogram(1)
+renderHistogramSet <- function(xVarNo) {
+  gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+  if(!is.na(x=aesList[["x"]][xVarNo])) gg1 <- renderHistogram(xVarNo)
+  if(!is.na(x=aesList[["x"]][xVarNo+1])) gg2 <- renderHistogram(xVarNo+1)
+  if(!is.na(x=aesList[["x"]][xVarNo+2])) gg3 <- renderHistogram(xVarNo+2)
+  if(!is.na(x=aesList[["x"]][xVarNo+3])) gg4 <- renderHistogram(xVarNo+3)
+
+  girafe( ggobj = plot_grid(gg1, gg2, gg3, gg4, ncol=2), width_svg = 8, height_svg = 4)
+  # girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+  
+}
+
+# renderHistogramSet(5)
+
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+
+Scatter Plot  
+ - [Histogram1] page  
+ - [Histogram2] page   
+ - [Histogram3] page  
+ - [Histogram4] page  
+ - [Histogram5] page  
+ - [Histogram6] page  
+ - [Histogram7] page  
+ - [Histogram8] page   
+ - [Histogram9] page   
+ - [Histogram10] page   
+ - [Histogram11] page   
+ - [Histogram12] page   
+ - [Histogram13] page   
+ - [Histogram14] page   
+ - [Histogram15] page  
+ - [Histogram16] page  
+ - [Histogram17] page  
+ - [Histogram18] page   
+ - [Histogram19] page   
+ - [Histogram20] page   
+ - [Histogram21] page   
+ - [Histogram22] page   
+ - [Histogram23] page   
+ - [Histogram24] page   
+ - [Histogram25] page 
+ 
+   
+
+
+
+Histogram1 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_1}
+  renderHistogramSet(1)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram1, Publication Date : `r params$pubDate`
+
+Histogram2 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_2}
+  renderHistogramSet(5)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram2, Publication Date : `r params$pubDate`
+
+Histogram3 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_3}
+  renderHistogramSet(9)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram3, Publication Date : `r params$pubDate`
+
+
+
+Histogram4 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histohram_4}
+  renderHistogramSet(13)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram4, Publication Date : `r params$pubDate`
+
+
+Histogram5 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_5}
+  renderHistogramSet(17)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram5, Publication Date : `r params$pubDate`
+
+
+
+Histogram6 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_6}
+  renderHistogramSet(21)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram6, Publication Date : `r params$pubDate`
+
+
+
+Histogram7 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_7}
+  renderHistogramSet(25)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram7, Publication Date : `r params$pubDate`
+
+
+
+Histogram8 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_8}
+  renderHistogramSet(29)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram8, Publication Date : `r params$pubDate`
+
+Histogram9 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_9}
+  renderHistogramSet(33)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram9, Publication Date : `r params$pubDate`
+
+Histogram10 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_10}
+  renderHistogramSet(37)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram10, Publication Date : `r params$pubDate`
+
+
+Histogram11 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_11}
+  renderHistogramSet(41)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram11 Publication Date : `r params$pubDate`
+
+Histogram12{data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_12}
+  renderHistogramSet(45)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram12, Publication Date : `r params$pubDate`
+
+Histogram13 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_13}
+  renderHistogramSet(49)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram13, Publication Date : `r params$pubDate`
+
+Histogram14 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_14}
+  renderHistogramSet(53)
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Histogram14, Publication Date : `r params$pubDate`
+
+Histogram15 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_15}
+  renderHistogramSet(57)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram15, Publication Date : `r params$pubDate`
+
+Histogram16 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_16}
+  renderHistogramSet(61)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram16, Publication Date : `r params$pubDate`
+
+Histogram17 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_17}
+  renderHistogramSet(65)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram17, Publication Date : `r params$pubDate`
+
+Histogram18 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_18}
+  renderHistogramSet(69)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram18, Publication Date : `r params$pubDate`
+
+Histogram19 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_19}
+  renderHistogramSet(73)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram19, Publication Date : `r params$pubDate`
+
+Histogram20 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_20}
+  renderHistogramSet(77)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram20, Publication Date : `r params$pubDate`
+
+Histogram21 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_21}
+  renderHistogramSet(81)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram21, Publication Date : `r params$pubDate`  
+
+Histogram22 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_22}
+  renderHistogramSet(85)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram22, Publication Date : `r params$pubDate`
+
+Histogram23 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_23}
+  renderHistogramSet(89)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram23, Publication Date : `r params$pubDate`
+
+Histogram24 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_24}
+  renderHistogramSet(93)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram24, Publication Date : `r params$pubDate`
+
+Histogram25 {data-navmenu="Histogram Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, histogram_25}
+  renderHistogramSet(97)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Histogram25, Publication Date : `r params$pubDate`
+
+
+
+
+
+
+
+
+
+

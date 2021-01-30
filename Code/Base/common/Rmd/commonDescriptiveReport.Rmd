@@ -1,0 +1,392 @@
+---
+title: "범용 기술통계 Report"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+### 내부 디버깅 ###
+df <- DFSource
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+# df <- params$df
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+
+
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+All Var  
+ - [structure] page  
+
+[constSumTable]  
+ 
+[catVarSumTable]
+
+catVarBarPlot  
+ - [CatVarBarPlot1] page   
+ - [CatVarBarPlot2] page   
+
+catVarLevelTable   
+ - [catVarLevelTable1] page    
+ 
+[numVarSumTable]  
+
+structure{data-navmenu="All Var"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=970}
+---------------------------------------------
+
+```{r, contVarTable2}
+str(df)
+```
+
+constSumTable
+=============================================
+
+Row {data-height=900}
+---------------------------------------------
+
+```{r, constSumTable}
+# df <- DFSource
+constNames <- extractConstName(df)
+func1 <- function(x) {
+  value <- unique(df[,x])
+  value <- as.character(value[1])
+}
+constValues <- vapply(constNames, func1, FUN.VALUE = character(1))
+dfTable <- data.frame(Const_Name=constNames, Value=constValues)
+DT::datatable(dfTable, rownames = FALSE, options = list(dom = 't'))
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+
+catVarSumTable
+=============================================
+
+Row {data-height=900}
+---------------------------------------------
+
+```{r, catVarSumTable}
+# dfCatVar <- Filter(is.factor, DFSource)
+# df <- DFSource
+catVarNames <- extractCatVarName(df)
+func1 <- function(x) {
+  length(unique(df[,x]))
+}
+noLevels <- as.vector(vapply(catVarNames, func1, FUN.VALUE=numeric(1)))
+catVarNames <- catVarNames[which(noLevels<11)]
+
+numVarNames <- extractNumVarName(df)
+# func1 <- function(x) {
+#   n_distinct(df[,x]) < 7 
+# }
+# bool <- vapply(numVarNames, func1, FUN.VALUE = logical(1))
+# fewLevelVarNames <- numVarNames[bool]
+# catVarNames <- union(catVarNames, fewLevelVarNames)
+if(length(catVarNames) == 0) {
+  "There is no categorical variable."
+  
+} else {
+  dfCatVar <- as.data.frame(df[,catVarNames])  #### as.data.frame이 없으면 범주형변수가 한개인 경우 dfCatVar은 벡터가 됨
+  colnames(dfCatVar)[1] <- catVarNames[1]     #### 범주형변수가 한개인 경우 df[,catVarNames] 가 변수명이됨.  변수명 수정 필요
+  dfCatVarLevels <- lapply(catVarNames, str_c)
+  # dfCatVarLevels <- list("cyl", "vs", "am","gear", "carb" )
+  names(dfCatVarLevels) <- catVarNames
+  # for(i in seq_along(catVarNames)) {
+  #   dfCatVarLevels[[catVarNames[i]]] <-
+  #   attr(dfCatVar[,catVarNames[i]][[1]], "levels")
+  # }
+  
+  for(x in seq_along(catVarNames)) {
+    if(is.factor(dfCatVar[,x])) {
+      dfCatVarLevels[[x]] <-
+        attr(dfCatVar[,x], "levels")
+    } else {
+      dfCatVarLevels[[x]] <-
+        as.character(unique(dfCatVar[,x]))
+  }
+}
+  
+  dfTableCatVar <- lapply(dfCatVarLevels,sort) %>% lapply(str_c,collapse=", ") %>%
+    as.data.frame 
+  tt <- t(dfTableCatVar)
+  colnames(tt) <- c("levels")
+  func1 <- function(x) {
+    length(unique(dfCatVarLevels[[x]]))
+  }
+  noLevels <- vapply(names(dfCatVarLevels), func1, FUN.VALUE = numeric(1))
+  noLevels <- as.data.frame(noLevels)
+  varNames <- as.data.frame(catVarNames)
+  tt <- cbind(varNames, noLevels, tt)
+  
+  DT::datatable(tt, rownames = FALSE, options=list(dom='t'))
+  
+}
+
+
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+CatVarBarPlot1 {data-navmenu="CatVarBarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, catVarBarPlot1}
+# df <- DFSource
+
+dfGraph <- df
+
+for(x in catVarNames) {
+    dfGraph[,x] <- as.factor(dfGraph[,x])
+}
+
+
+renderBarPlot <- function(x, i) {
+  ggObj <- ggplot(dfGraph) + geom_bar(aes_string(x=x))
+  ggObj 
+}
+
+if(!is.na(catVarNames[1]))
+  renderBarPlot(catVarNames[1],1)
+```
+
+
+
+###
+```{r, catVarBarPlot2}
+if(!is.na(catVarNames[2]))
+  renderBarPlot(catVarNames[2],2)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, catVarBarPlot3}
+if(!is.na(catVarNames[3]))
+  renderBarPlot(catVarNames[3],3)
+```
+
+###
+```{r, catVarBarPlot4}
+if(!is.na(catVarNames[4]))
+  renderBarPlot(catVarNames[4],4)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+CatVarBarPlot2 {data-navmenu="CatVarBarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, catVarBarPlot5}
+if(!is.na(catVarNames[5]))
+  renderBarPlot(catVarNames[5],5)
+```
+
+
+
+###
+```{r, catVarBarPlot6}
+if(!is.na(catVarNames[6]))
+  renderBarPlot(catVarNames[6],6)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, catVarBarPlot7}
+if(!is.na(catVarNames[7]))
+  renderBarPlot(catVarNames[7],7)
+```
+
+###
+```{r, catVarBarPlot8}
+if(!is.na(catVarNames[8]))
+  renderBarPlot(catVarNames[8],8)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+catVarLevelTable1{data-navmenu="catVarLevelTable"}
+=============================================
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_1}
+renderLevelNodata <- function(i) {
+  tl <- table(DFSource[,catVarNames[i]])
+  table1 <- t(as.matrix(tl))
+  row.names(table1) <- paste( catVarNames[i], "  : no of obs")
+  # varName <- paste0("Levels of " ,catVarNames[i])
+  DT::datatable(table1, options = list(dom = 't'), 
+                colnames = c('Levels'  = 1))
+}
+if(!is.na(catVarNames[1]))
+ renderLevelNodata(1)
+# table1
+# knitr::kable(table1)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_2}
+if(!is.na(catVarNames[2]))
+  renderLevelNodata(2)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_3}
+if(!is.na(catVarNames[3]))
+  renderLevelNodata(3)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_4}
+if(!is.na(catVarNames[4]))
+  renderLevelNodata(4)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_5}
+if(!is.na(catVarNames[5]))
+  renderLevelNodata(5)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_6}
+if(!is.na(catVarNames[6]))
+  renderLevelNodata(6)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+numVarSumTable
+=============================================
+
+Row {data-height=700}
+---------------------------------------------
+
+```{r, numVarSumTable}
+# df <- DFSource
+summary <- function(x) {
+  funs <- c(min, mean, max, sd)
+  lapply(funs, function(f) f(x, na.rm=TRUE))
+}
+
+dfContVar <- Filter(is.numeric, DFSource)
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+row.names(dfTableContVar) <- c("min", "mean", "max", "sd")
+# dfTableContVar <- as.data.frame(lapply(lapply(dfContVar, summary), unlist))
+
+func1 <- function(x) {
+  minValue <- dfTableContVar["min",x]
+  minDecimal <- nchar(as.character(minValue)) - nchar(as.character(floor(minValue)))
+  maxValue <- dfTableContVar["min",x]
+  maxDecimal <- nchar(as.character(maxValue)) - nchar(as.character(floor(maxValue)))
+  decimal <- max(minDecimal, maxDecimal)
+  decimal <- ifelse( decimal > 1, decimal - 1, decimal)
+  return(decimal)
+}
+
+decimalVec <- vapply(colnames(dfTableContVar), func1, FUN.VALUE=numeric(1))
+
+for(i in seq_along(colnames(dfTableContVar))) {
+    dfTableContVar[,i] <- round(dfTableContVar[,i], decimalVec[i])
+    dfTableContVar[,i] <- as.character(dfTableContVar[,i])
+}
+
+
+tt <- t(dfTableContVar)
+noNA <- as.vector(colSums(is.na(dfContVar)))
+tt <- cbind(tt, noNA)
+colnames(tt) <- c("최소", "평균", "최대", "편차", "NA 갯수")
+
+validMax <- rep(NA,length(colnames(dfContVar)))
+for(i in seq_along(colnames(dfContVar))) {
+  # i <- 93
+  if(is.null(attr(dfContVar[,i],"validMax"))) {
+      validMax[i] <- NA
+  } else {
+      validMax[i] <- attr(dfContVar[,i],"validMax") 
+  }
+}
+
+validMin <- rep(NA,length(colnames(dfContVar)))
+for(i in seq_along(colnames(dfContVar))) {
+  # i <- 93
+  if(is.null(attr(dfContVar[,i],"validMin"))) {
+      validMin[i] <- NA
+  } else {
+      validMin[i] <- attr(dfContVar[,i],"validMin") 
+  }
+}
+
+tt <- data.frame(validMax=validMax, validMin=validMin, tt)
+
+
+# colnames(tt) <- c("min", "mean", "max", "sd")
+DT::datatable(tt)
+
+# dfTableContVar["min","wt"]
+# DT::datatable(tt,
+#               rownames = c("min", "mean", "max", "sd"))
+              # rownames = c("최소", "평균", "최대", "편차")) 
+# %>%
+#   formatRound(c("mpg","cyl","disp","hp","drat","wt","qsec","vs","am","gear","carb"),
+#               c(1,0,1,0,2,3,2,0,0,0,0)) 
+
+```
+
+Row {data-height=100}
+---------------------------------------------
+

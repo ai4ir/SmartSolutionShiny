@@ -1,0 +1,57 @@
+.OptimizeTable {
+    width : 1200px;
+}
+
+.OptimizeTable * {
+    font-size: 20px;
+}
+
+
+#OptimizeTable1 table {
+    float: left;
+    width: 300px; 
+    margin: 20px;
+}
+
+#OptimizeTable1 .col1 {
+    width : 100px; 
+}
+#OptimizeTable1 .col2 {
+    width : 100px; 
+}
+#OptimizeTable1 .col3 {
+    width : 100px; 
+}
+
+#OptimizeTable2 table {
+    float: left;
+    width: 300px; 
+    margin: 20px ;
+}
+
+#OptimizeTable2 .col1 {
+    width : 100px; 
+}
+#OptimizeTable2 .col2 {
+    width : 100px; 
+}
+#OptimizeTable2 .col3 {
+    width : 100px; 
+}
+
+#OptimizeTable3 table {
+    float: left;
+    width: 300px; 
+    margin: 20px ;
+}
+
+#OptimizeTable3 .col1 {
+    width : 100px; 
+}
+#OptimizeTable3 .col2 {
+    width : 100px; 
+}
+#OptimizeTable3 .col3 {
+    width : 100px; 
+}
+

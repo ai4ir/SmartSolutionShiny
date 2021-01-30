@@ -1,0 +1,72 @@
+---
+title: "CommonDescriptiveReport"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+df <- params$df
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Summary Table  
+ - [Inquiry] page  
+ - [Property] page  
+ - [Composition] page  
+ 
+
+Inquiry{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=970}
+---------------------------------------------
+
+
+Property{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=970}
+---------------------------------------------
+
+
+Composition{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=970}
+---------------------------------------------
+

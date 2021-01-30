@@ -1,0 +1,353 @@
+---
+title: "탐색 그래프 Report"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    aesList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+# Sys.setlocale( "LC_ALL", "C")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+
+df <- params$df
+aesList <- params$aesList
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+extractCatVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  catVar <- varNameVec[!booleanVec]
+}
+ # df <- dfReportCommon
+aesList[["x"]] <- setdiff(extractNumVarName(df), 
+                          c(aesList[["y"]], aesList[["size"]], aesList[["shape"]]))
+dfX <- df[,aesList[["x"]]]
+# x <- df[,"wt"]
+y <- df[,aesList[["y"]]]
+calcR2 <- function(x) {
+  df2 <- data.frame(x=x,y=y)
+  x2 <- x * x
+  modelResult <- lm(y~x + x2, data=df2)
+  # adjR2 <- broom::glance(modelResult)[["adj.r.squared"]] # 음수값이 나오는 경우 발생
+  R2 <- broom::glance(modelResult)[["r.squared"]]
+}
+R2Vec <- vapply(dfX, calcR2, numeric(1))
+meltR <- melt(R2Vec)
+orderR <- order(meltR$value, decreasing=TRUE)
+aesList[["x"]] <- row.names(meltR)[orderR]
+# browser()
+```
+
+Inputs {.sidebar}
+=============================================
+
+
+Scatter Plot  
+ - [Scatter1] page  
+ - [Scatter2] page   
+ - [Scatter3] page  
+ 
+Box Plot  
+  - [Box1] page  
+  - [Box2] page  
+  - [Box3] page  
+  
+ 
+ 
+ 
+
+ 
+
+
+Scatter1 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, scatter_1}
+# df <- DFSource
+renderScatterPlot <- function(x, y, color=NULL, size=NULL, shape=NULL) {
+  # x="wt"; y="mpg"; color="cyl"
+    dfGraph <- df[,c(x,y,color, size, shape)] 
+    dfGraph[,size] <- as.factor(dfGraph[,size])
+    dfGraph[,shape] <- as.factor(dfGraph[,shape])
+    if(!is.null(color) && !is.factor(dfGraph[,color])  && length(unique(dfGraph[,color])) < 6 && x!=color) {
+      dfGraph[,color] <- as.factor(dfGraph[,color])
+    }
+    dfModel <- dfGraph[,c(x, y)]
+    colnames(dfModel) <- c("xVec", "yVec")
+    dfModel <- dfModel %>% mutate(xVec2 = xVec * xVec)
+    model <- lm(yVec ~ xVec + xVec2,data=dfModel)
+    # dfPred <- add_predictions(dfModel, model)
+    myfunc <- function(x) {
+      model[["coefficients"]][1] + model[["coefficients"]][2] * x + model[["coefficients"]][3]*x*x
+    }
+    labelAnnotate <- paste0("R2 : ", round(R2Vec[x],3))
+    xAnnotate = min(dfGraph[,x],na.rm=TRUE) +
+                       0.15*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
+    ggplot(dfGraph) + geom_point(aes_string(x=x, y=y, color=color, size=size, shape=shape)) +
+      # geom_line(data=dfPred, aes(x=xVec, y=pred, color=NULL)) 
+      stat_function(fun=myfunc, geom="line", color="black") +
+      annotate("text",
+               x=xAnnotate, y=min(dfGraph[,y]), label=labelAnnotate, color="black", size=2)
+    
+}
+# renderScatterPlot(x="wt", y="mpg", color="cyl")
+if(!is.na(x=aesList[["x"]][1]))
+  renderScatterPlot(x=aesList[["x"]][1], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+### 
+```{r, scatter_2}
+if(!is.na(x=aesList[["x"]][2]))
+  renderScatterPlot(x=aesList[["x"]][2], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, scatter_3}
+if(!is.na(x=aesList[["x"]][3]))
+  renderScatterPlot(x=aesList[["x"]][3], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+### 
+```{r, scatter_4}
+if(!is.na(x=aesList[["x"]][4]))
+  renderScatterPlot(x=aesList[["x"]][4], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+Scatter2 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, scatter_5}
+if(!is.na(x=aesList[["x"]][5]))
+  renderScatterPlot(x=aesList[["x"]][5], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+### 
+```{r, sactter_6}
+if(!is.na(x=aesList[["x"]][6]))
+  renderScatterPlot(x=aesList[["x"]][6], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, scatter_7}
+if(!is.na(x=aesList[["x"]][7]))
+  renderScatterPlot(x=aesList[["x"]][7], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+### 
+```{r, scatter_8}
+if(!is.na(x=aesList[["x"]][8]))
+  renderScatterPlot(x=aesList[["x"]][8], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+Scatter3 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, scatter9}
+if(!is.na(x=aesList[["x"]][9]))
+  renderScatterPlot(x=aesList[["x"]][9], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+### 
+```{r, scatter10}
+if(!is.na(x=aesList[["x"]][10]))
+  renderScatterPlot(x=aesList[["x"]][10], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, scatter11}
+if(!is.na(x=aesList[["x"]][11]))
+  renderScatterPlot(x=aesList[["x"]][11], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+### 
+```{r, scatter12}
+if(!is.na(x=aesList[["x"]][12]))
+  renderScatterPlot(x=aesList[["x"]][12], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]])
+```
+
+Box1 {data-navmenu="Box Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, box_1}
+# df <- DFSource
+
+constNames <- extractConstName(df)
+varNames <- setdiff(colnames(df), constNames)
+xVarNames <- union(constNames[1], varNames)
+aesList[["x"]] <- setdiff(xVarNames, aesList[["y"]])
+
+renderBoxPlot <- function(x, y) {
+  # x="wt"; y="mpg"; color="cyl"
+  dfGraph <- df[,c(x,y)] 
+
+  if(is.factor(dfGraph[,x]) || length(unique(dfGraph[,x]))<10 )  {
+      gg <- ggplot(dfGraph, aes_string(x=x, y=y)) + geom_boxplot(aes_string(group=x))
+  } else {
+      gg <- ggplot(dfGraph, aes_string(x=x, y=y)) + 
+        # geom_boxplot(aes_string(group=cut_number(dfGraph[,x], 10)))
+        geom_boxplot(aes_string(group=cut_interval(dfGraph[,x], 10)))
+  }
+  gg
+}
+# renderBoxPlot(x="sampleCode", y="mpg")
+if(!is.na(x=aesList[["x"]][1]))
+  renderBoxPlot(x=aesList[["x"]][1], y=aesList[["y"]] )
+```
+
+### 
+```{r, box_2}
+if(!is.na(x=aesList[["x"]][2]))
+  renderBoxPlot(x=aesList[["x"]][2], y=aesList[["y"]] )
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, box_3}
+if(!is.na(x=aesList[["x"]][3]))
+  renderBoxPlot(x=aesList[["x"]][3], y=aesList[["y"]] )
+```
+
+### 
+```{r, box_4}
+if(!is.na(x=aesList[["x"]][4]))
+  renderBoxPlot(x=aesList[["x"]][4], y=aesList[["y"]] )
+```
+
+Box2 {data-navmenu="Box Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, box_5}
+if(!is.na(x=aesList[["x"]][5]))
+  renderBoxPlot(x=aesList[["x"]][5], y=aesList[["y"]] )
+```
+
+### 
+```{r, box_6}
+if(!is.na(x=aesList[["x"]][6]))
+  renderBoxPlot(x=aesList[["x"]][6], y=aesList[["y"]] )
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, box_7}
+if(!is.na(x=aesList[["x"]][7]))
+  renderBoxPlot(x=aesList[["x"]][7], y=aesList[["y"]] )
+```
+
+### 
+```{r, box_8}
+if(!is.na(x=aesList[["x"]][8]))
+  renderBoxPlot(x=aesList[["x"]][8], y=aesList[["y"]] )
+```
+
+Box3 {data-navmenu="Box Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, box_9}
+if(!is.na(x=aesList[["x"]][9]))
+  renderBoxPlot(x=aesList[["x"]][9], y=aesList[["y"]] )
+```
+
+### 
+```{r, box_10}
+if(!is.na(x=aesList[["x"]][10]))
+  renderBoxPlot(x=aesList[["x"]][10], y=aesList[["y"]] )
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, box_11}
+if(!is.na(x=aesList[["x"]][11]))
+  renderBoxPlot(x=aesList[["x"]][11], y=aesList[["y"]] )
+```
+
+### 
+```{r, box_12}
+if(!is.na(x=aesList[["x"]][12]))
+  renderBoxPlot(x=aesList[["x"]][12], y=aesList[["y"]] )
+```

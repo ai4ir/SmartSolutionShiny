@@ -1,0 +1,343 @@
+---
+title: "탐색 그래프 Report One Y"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    aesList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+# Sys.setlocale( "LC_ALL", "C")
+knitr::opts_chunk$set(echo=FALSE)
+options(warn=-1)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+if(!library(ggiraph, logical.return=TRUE)) {
+    install.packages("ggiraph")
+    library(ggiraph)
+}
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+if(!library(hrbrthemes, logical.return=TRUE)) {
+    install.packages("hrbrthemes")
+    library(hrbrthemes)
+}
+
+if(!library(viridis, logical.return=TRUE)) {
+    install.packages("viridis")
+    library(viridis)
+}
+
+
+### 내부 디버깅 ###
+df <- dfReportCommon
+
+
+df %>%
+  ggplot( aes(x=customer, y=YS, fill=customer)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+    geom_jitter(aes_string(color="spec"), size=0.4, alpha=0.9) +
+    theme_ipsum() +
+    theme(
+      legend.position="right",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("A boxplot with jitter") +
+    xlab("")
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+# df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+# pathHTMLReport <- params$pathHTMLReport  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+# aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=10))
+theme_update(axis.text=element_text(size=8))
+# theme_update(legend.text = element_text(size=8))
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+extractCatVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  catVar <- varNameVec[!booleanVec]
+}
+ # df <- dfReportCommon
+aesList[["x"]] <- setdiff(aesList[["x"]], 
+                          c(aesList[["y"]], aesList[["size"]], aesList[["shape"]]))
+dfX <- df[,aesList[["x"]]]
+# x <- df[,"wt"]
+y <- df[,aesList[["y"]]]
+calcR2 <- function(x) {
+  df2 <- data.frame(x=x,y=y)
+  x2 <- x * x
+  modelResult <- lm(y~x + x2, data=df2)
+  # adjR2 <- broom::glance(modelResult)[["adj.r.squared"]] # 음수값이 나오는 경우 발생
+  R2 <- broom::glance(modelResult)[["r.squared"]]
+}
+R2Vec <- vapply(dfX, calcR2, numeric(1))
+meltR <- melt(R2Vec)
+orderR <- order(meltR$value, decreasing=TRUE)
+aesList[["x"]] <- row.names(meltR)[orderR]
+
+
+renderScatterPlot <- function(x, y, color=NULL, size=NULL, shape=NULL, tooltip = NULL, data_id=NULL) {
+  # x="wt"; y="mpg"; color="cyl"
+    dfGraph <- df[,c(x,y,color, size, shape,tooltip, data_id)] 
+    if(length(dfGraph[,color])<10)
+        dfGraph[,color] <- as.factor(dfGraph[,color])
+    
+    dfGraph[,size] <- as.factor(dfGraph[,size])
+    dfGraph[,shape] <- as.factor(dfGraph[,shape])
+    if(!is.null(color) && !is.factor(dfGraph[,color])  && length(unique(dfGraph[,color])) < 6 && x!=color) {
+      dfGraph[,color] <- as.factor(dfGraph[,color])
+    }
+    dfModel <- dfGraph[,c(x, y)]
+    colnames(dfModel) <- c("xVec", "yVec")
+    dfModel <- dfModel %>% mutate(xVec2 = xVec * xVec)
+    model <- lm(yVec ~ xVec + xVec2,data=dfModel)
+    # dfPred <- add_predictions(dfModel, model)
+    myfunc <- function(x) {
+      model[["coefficients"]][1] + model[["coefficients"]][2] * x + model[["coefficients"]][3]*x*x
+    }
+    labelAnnotate <- paste0("R2 : ", round(R2Vec[x],3))
+    xAnnotate = min(dfGraph[,x],na.rm=TRUE) +
+                       0.15*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
+    if(is.null(tooltip)) {
+      tooltip <- "tooltip"
+      dfGraph <- dfGraph %>% mutate(tooltip=paste(as.character(dfGraph[,y]), "\n", dfGraph[,x], "\n",
+                                          dfGraph[,color], "\n", dfGraph[,data_id]))
+    }
+    
+
+    gg1 <- ggplot(dfGraph) +
+      geom_point_interactive(aes_string(x = x, y=y, color = color, size=size, shape=shape,
+                                      tooltip = tooltip, data_id = data_id), size = 1) +
+      stat_function(fun=myfunc, geom="line", color="black") +
+      annotate("text",
+               x=xAnnotate, 
+               y=min(dfGraph[,y], na.rm=TRUE), label=labelAnnotate, color="black", size=2) +
+      guides(color = guide_legend(override.aes = list(size = 1))) + 
+      theme(legend.title = element_text(size = 8),
+            legend.text  = element_text(size = 6),
+            legend.key.size = unit(0.1, "lines"))
+      
+    # girafe( code = print(gg1), width_svg = 8, height_svg = 4)
+    
+
+}
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+
+Scatter Plot  
+ - [Scatter1] page  
+ - [Scatter2] page   
+ - [Scatter3] page  
+ - [Scatter4] page  
+ - [Scatter5] page  
+
+
+
+Scatter1 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=990}
+---------------------------------------------
+
+### 
+```{r, scatter_1}
+
+gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+if(!is.na(x=aesList[["x"]][1]))
+  gg1 <- renderScatterPlot(x=aesList[["x"]][1], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][2]))
+  gg2 <- renderScatterPlot(x=aesList[["x"]][2], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+if(!is.na(x=aesList[["x"]][3]))
+  gg3 <- renderScatterPlot(x=aesList[["x"]][3], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][4]))
+  gg4 <- renderScatterPlot(x=aesList[["x"]][4], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+
+ggAll <- girafe( ggobj = plot_grid(gg1, gg2,gg3,gg4, ncol=2), width_svg = 8, height_svg = 4)
+girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+
+```
+
+
+Scatter2 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=990}
+---------------------------------------------
+
+### 
+```{r, scatter_2}
+
+gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+if(!is.na(x=aesList[["x"]][5]))
+  gg1 <- renderScatterPlot(x=aesList[["x"]][5], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][6]))
+  gg2 <- renderScatterPlot(x=aesList[["x"]][6], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+if(!is.na(x=aesList[["x"]][7]))
+  gg3 <- renderScatterPlot(x=aesList[["x"]][7], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][8]))
+  gg4 <- renderScatterPlot(x=aesList[["x"]][8], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+ggAll <- girafe( ggobj = plot_grid(gg1, gg2,gg3,gg4, ncol=2), width_svg = 8, height_svg = 4)
+girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+
+```
+
+Scatter3 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=990}
+---------------------------------------------
+
+### 
+```{r, scatter_3}
+
+gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+if(!is.na(x=aesList[["x"]][9]))
+  gg1 <- renderScatterPlot(x=aesList[["x"]][9], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][10]))
+  gg2 <- renderScatterPlot(x=aesList[["x"]][10], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+if(!is.na(x=aesList[["x"]][11]))
+  gg3 <- renderScatterPlot(x=aesList[["x"]][11], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][12]))
+  gg4 <- renderScatterPlot(x=aesList[["x"]][12], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+
+ggAll <- girafe( ggobj = plot_grid(gg1, gg2,gg3,gg4, ncol=2), width_svg = 8, height_svg = 4)
+girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+
+```
+
+Scatter4 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=990}
+---------------------------------------------
+
+### 
+```{r, scatter_4}
+
+# renderScatterPlot(x="wt", y="mpg", color="cyl")
+gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+if(!is.na(x=aesList[["x"]][13]))
+  gg1 <- renderScatterPlot(x=aesList[["x"]][13], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][14]))
+  gg2 <- renderScatterPlot(x=aesList[["x"]][14], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+if(!is.na(x=aesList[["x"]][15]))
+  gg3 <- renderScatterPlot(x=aesList[["x"]][15], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][16]))
+  gg4 <- renderScatterPlot(x=aesList[["x"]][16], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+ggAll <- girafe( ggobj = plot_grid(gg1, gg2,gg3,gg4, ncol=2), width_svg = 8, height_svg = 4)
+girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+
+```
+
+Scatter5 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=990}
+---------------------------------------------
+
+### 
+```{r, scatter_5}
+
+gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+if(!is.na(x=aesList[["x"]][17]))
+  gg1 <- renderScatterPlot(x=aesList[["x"]][17], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][18]))
+  gg2 <- renderScatterPlot(x=aesList[["x"]][18], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+if(!is.na(x=aesList[["x"]][19]))
+  gg3 <- renderScatterPlot(x=aesList[["x"]][19], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["x"]][20]))
+  gg4 <- renderScatterPlot(x=aesList[["x"]][20], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+ggAll <- girafe( ggobj = plot_grid(gg1, gg2,gg3,gg4, ncol=2), width_svg = 8, height_svg = 4)
+girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+
+```

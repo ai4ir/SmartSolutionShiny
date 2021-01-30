@@ -1,0 +1,117 @@
+.DomainExploreTable {
+    width : 1200px;
+}
+#nameFileDomain {
+    width: 900px;
+}
+#nameFileDomain .radio {
+    float: left;
+    margin: 10px;
+}
+
+#ModalSelCatVarExplore {
+    width: 1200px;
+}
+#ModalSelCatVarExplore .checkbox {
+    float: left; 
+    margin: 10px;
+}
+
+
+
+
+#ModalExploreDWTT {
+    width: 1200px;
+}
+#ModalExploreDWTT .checkbox {
+    float: left;
+    margin: 10px;
+}
+
+/*
+#ModalSelCatVarExplore * {
+    float: left;
+    margin: 10px;
+}
+    
+
+
+
+.checkbox  {
+    float: left;
+    margin: 10px;
+}
+
+
+#DomainExploreCheckbox  {
+    float: left;
+    width: 230px; 
+    margin: 10px;
+}
+
+*/
+#DomainTable1 table {
+    float: left;
+    width: 230px; 
+    margin: 10px;
+}
+
+#DomainTable1 .col1 {
+    width : 30px; 
+}
+#DomainTable1 .col2 {
+    width : 100px; 
+}
+#DomainTable1 .col3 {
+    width : 100px; 
+}
+
+#DomainTable2 table {
+    float: left;
+    width: 230px; 
+    margin: 10px ;
+}
+
+#DomainTable2 .col1 {
+    width : 30px; 
+}
+#DomainTable2 .col2 {
+    width : 100px; 
+}
+#DomainTable2 .col3 {
+    width : 100px; 
+}
+
+#DomainTable3 table {
+    float: left;
+    width: 230px; 
+    margin: 10px ;
+}
+
+#DomainTable3 .col1 {
+    width : 30px; 
+}
+#DomainTable3 .col2 {
+    width : 100px; 
+}
+#DomainTable3 .col3 {
+    width : 100px; 
+}
+
+/*
+
+
+.OtherDesignTable table {
+    position : absolute;
+    top : 0;
+    left : 300px;
+    width : 200px; 
+}
+
+
+
+.OtherDesignTable .col1 {
+    width : 80px; 
+}
+
+*/

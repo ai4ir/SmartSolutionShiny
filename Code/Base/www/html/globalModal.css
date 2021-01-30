@@ -1,0 +1,124 @@
+#ModalRadioButtons {
+width: 1200px;
+}
+
+
+#ModalRadioButtons .radio {
+float: left;
+margin: 10px;
+}
+
+#fitOption .radio {
+float: left;
+margin: 10px;
+}
+
+#selModal .checkbox {
+float: left;
+margin: 10px;
+}
+
+
+#kmeans-selClusteringVarModal {
+width: 1200px;
+}
+
+#kmeans-selClusteringVarModal .checkbox {
+float: left;
+margin: 10px;
+}
+
+#shiny-modal {
+width: 1600px;
+}
+
+#shiny-modal .shiny-input-container {
+float: left; 
+margin: 10px;
+}
+
+
+#selModal {
+width: 1200px;
+}
+
+#selModal .radio {
+float: left;
+margin: 10px;
+}
+
+
+#scatter1-selModal {
+width: 1200px;
+}
+
+#scatterGirafe1-selModal  .radio {
+float: left;
+margin: 10px;
+}
+
+#scatterGirafe1-selModal {
+width: 1200px;
+}
+
+#scatter1-selModal  .radio {
+float: left;
+margin: 10px;
+}
+
+#boxplot1-selModal {
+width: 1200px;
+}
+#boxplot1-selModal  .radio {
+float: left;
+margin: 10px;
+}
+
+#boxplot2-selModal {
+width: 1200px;
+}
+#boxplot2-selModal  .radio {
+float: left;
+margin: 10px;
+}
+#boxplot3-selModal {
+width: 1200px;
+}
+#boxplot3-selModal  .radio {
+float: left;
+margin: 10px;
+}
+
+#violin1-selModal {
+width: 1200px;
+}
+#violin1-selModal  .radio {
+float: left;
+margin: 10px;
+}
+
+#bar1-selModal {
+width: 1200px;
+}
+#bar1-selModal  .radio {
+float: left;
+margin: 10px;
+}
+
+#histogram1-selModal {
+width: 1200px;
+}
+#histogram1-selModal  .radio {
+float: left;
+margin: 10px;
+}
+
+
+#selModelResultReport {
+width: 1200px;
+}
+
+#selModelResultReport .radio {
+float: left;
+margin: 10px;
+}

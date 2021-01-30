@@ -1,0 +1,186 @@
+############################################ EXCEL ##############################
+MTVCodeList <- list(del=NA, remain=NA, mutate=NA, change=NA)
+
+loadSource <- function() {
+  projectWD <- getwd()
+  setwd("..")
+  dirPath <- paste0(getwd(),"/SourceData/EXCEL")
+  setwd(dirPath)
+  # Tell R to sleep until the current directory matches the expected directory
+  while(getwd() != normalizePath(dirPath, winslash="/")) {
+    Sys.sleep(0.02)
+  }
+  filePath <<- file.choose()
+  
+  ### filePath <- "..\\SourceData\\EXCEL\\mtcars_meta.xlsx"   ### 지우지 마세요
+  
+  chosenDFSourceFileExt <<- str_split(filePath, "\\\\")[[1]][length( str_split(filePath, "\\\\")[[1]])]
+  chosenDFSourceFile <<- str_split(chosenDFSourceFileExt, "\\.")[[1]][1]
+  chosenDFSourceExt <- str_split(chosenDFSourceFileExt, "\\.")[[1]][2]
+  
+  # filePathDir <- str_sub(filePath,1,str_length(filePath)-str_length(chosenDFSourceFile)-str_length(chosenDFSourceExt)-1)
+
+
+  setwd(projectWD)
+  switch(chosenDFSourceExt,
+         xlsx = {
+           DFSource <<- read_xlsx_meta(filePath)
+         },
+         csv = {
+           DFSource <<- read_csv_meta(filePath)
+         },
+         rds = {
+           DFSource <<- read_rds(filePath)
+         })
+
+  # 이하는 리포트 생성용
+
+  ############## 전체 관련 고유 정보 ################
+  pathHTMLReport <<- "../USER/EXCEL/output"
+  
+  hide("renderReportSourcing")
+  # ############## Sourcing 관련 고유 정보 ################
+  # pathFileRmdSourcingReport <<- c("each/menuSourcing/mtcars/Rmd/SourcingReport1.Rmd",
+  #                                 "each/menuSourcing/mtcars/Rmd/SourcingReport2.Rmd"
+  # )
+  # outputFileNamesSourcingReport <<- c("SourcingReport1.html",
+  #                                     "SourcingReport2.html")
+  # ############## Sampling 관련 고유 정보 ################
+  # pathFileRmdSamplingReport <<- c("each/menuSourcing/mtcars/Rmd/SamplingReport1.Rmd",
+  #                                 "each/menuSourcing/mtcars/Rmd/SamplingReport2.Rmd",
+  #                                 "each/menuSourcing/mtcars/Rmd/SamplingReportTable.Rmd"
+  # )
+  # outputFileNamesSamplingReport <<- c("SamplingReport1.html",
+  #                                     "SamplingReport2.html",
+  #                                     "SamplingReportTable.html")
+
+
+  
+  pathNameFileDomain <<- "../USER/EXCEL/Domain"
+  pathNameFileDesign <<- "../USER/EXCEL/Design"
+  # pathNameFileNewModel <<- "../Model/mtcars"
+
+
+   
+
+}
+
+renderAttrSamplingUI <- function() {
+  
+  ############## 변수 분리 ################
+  numVar <- extractNumVarName(DFSource)
+  catVar <- extractCatVarName(DFSource)
+  
+  func1 <- function(x) {
+    if(length(unique(DFSource[,x])) > 3 ) {
+      TRUE
+    } else {
+      FALSE
+    }
+    
+  }
+  
+  boolTrueNum <- vapply(numVar, func1, logical(1))
+  numVarTrue <- numVar[boolTrueNum]
+  
+  lengthNumVarTrue <- length(numVarTrue)
+  
+  if (lengthNumVarTrue>12) {
+    DomainTable1Names <<- numVarTrue[1:12]
+    # DomainTable1Names <<- c("Sepal.Length", "Sepal.Width")
+    DomainTable1NamesLabel <<- DomainTable1Names
+  } else {
+    DomainTable1Names <<- numVarTrue[1:lengthNumVarTrue]
+    # DomainTable1Names <<- c("Sepal.Length", "Sepal.Width")
+    DomainTable1NamesLabel <<- DomainTable1Names
+  }
+  
+  if (lengthNumVarTrue>24) {
+    DomainTable2Names <<- numVarTrue[13:24]
+    # DomainTable1Names <<- c("Sepal.Length", "Sepal.Width")
+    DomainTable2NamesLabel <<- DomainTable1Names
+  } else if(lengthNumVarTrue>12) {
+    DomainTable2Names <<- numVarTrue[13:lengthNumVarTrue]
+    # DomainTable1Names <<- c("Sepal.Length", "Sepal.Width")
+    DomainTable2NamesLabel <<- DomainTable1Names
+  } else {
+    DomainTable2Names <<- NULL
+    DomainTable2NamesLabel <<- DomainTable1Names    
+  }
+  
+  if (lengthNumVarTrue>36) {
+    DomainTable3Names <<- numVarTrue[25:36]
+    # DomainTable1Names <<- c("Sepal.Length", "Sepal.Width")
+    DomainTable3NamesLabel <<- DomainTable1Names
+  } else if(lengthNumVarTrue>24) {
+    DomainTable3Names <<- numVarTrue[13:lengthNumVarTrue]
+    # DomainTable1Names <<- c("Sepal.Length", "Sepal.Width")
+    DomainTable3NamesLabel <<- DomainTable1Names
+  } else {
+    DomainTable3Names <<- NULL
+    DomainTable3NamesLabel <<- DomainTable1Names    
+  }
+
+  
+  # chemCompName <- c("C","Si","Mn","P","S", "Cu", "Ni", "Cr", "Mo", "V", "Nb","Ti", "SolAl", "B",  "N2", "Ca")
+  # chemCompNameLabel <- c("C","Si","Mn","P","S", "Cu", "Ni", "Cr", "Mo", "V", "Nb", "Ti","SolAl", "B(ppm)", "N2(ppm)",  "Ca(ppm)")
+  
+  ############## dfDomainCat 계산 ################
+  func1 <- function(x) {
+    if( length(unique(DFSource[,x])) == 2 || length(unique(DFSource[,x])) == 3) {
+      TRUE
+    } else {
+      FALSE
+    }
+  }
+  boolTwoThreeLevels <- vapply(catVar, func1, logical(1))
+  catVarTwoThreeLevels <- union(catVar[boolTwoThreeLevels], numVar[!boolTrueNum])
+  catVarWithoutModal <<- catVarTwoThreeLevels # Modal을 이용하지 않고 Category를 선택하는 변수
+  
+  func1 <- function(x) {
+    if( length(unique(DFSource[,x])) < 4) {
+      TRUE
+    } else {
+      FALSE
+    }
+  }
+  boolFewLevels <- vapply(catVar, func1, logical(1))
+  catVarWithModal <<- setdiff(catVar[!boolFewLevels], "rowNoSource")  # Modal을 이용하여 Category를 선택하는 변수
+  
+  
+  
+  catVarNameExplore <- c(catVarWithoutModal, catVarWithModal)
+  dfDomainCatExplore <- vector("list",length(catVarNameExplore))
+  
+  names(dfDomainCatExplore) <- catVarNameExplore
+  
+  
+  for(i in 1:NROW(catVarNameExplore)) {
+    if(is.factor(DFSource[,catVarNameExplore[i]][[1]])) {
+      dfDomainCatExplore[[catVarNameExplore[i]]] <-
+        attr(DFSource[,catVarNameExplore[i]][[1]], "levels")
+    } else {
+      dfDomainCatExplore[[catVarNameExplore[i]]] <-
+        as.character(unique(DFSource[,catVarNameExplore[i]]))
+    }
+  }
+  
+  selCatDomainExplore <<- dfDomainCatExplore
+  
+  
+  
+}
+
+
+read_xlsx_meta <- function(filePath) {
+  
+  ### filePath <- "..\\SourceData\\EXCEL\\mtcars_meta.xlsx"   ### 지우지 마세요
+  
+  df <- read_xlsx(filePath, sheet=1, skip=7, col_names=FALSE)
+  df <- as.data.frame(df)
+  
+  df <- attachAttr(filePath, df)
+
+  return(df)
+
+}

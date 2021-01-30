@@ -1,0 +1,627 @@
+---
+title: "범용 기술통계 Report"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+df <- params$df
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+All Var  
+ - [structure] page  
+
+[constSumTable]  
+ 
+[catVarSumTable]
+
+catVarBarPlot  
+ - [CatVarBarPlot1] page   
+ - [CatVarBarPlot2] page   
+
+catVarLevelTable   
+ - [catVarLevelTable1] page    
+ 
+[numVarSumTable]  
+ 
+BarPlot  
+ - [BarPlot1] page   
+ - [BarPlot2] page   
+ - [BarPlot3] page   
+ - [BarPlot4] page   
+ - [BarPlot5] page  
+ - [BarPlot6] page  
+ 
+ 
+
+
+structure{data-navmenu="All Var"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=970}
+---------------------------------------------
+
+```{r, contVarTable2}
+str(df)
+```
+
+constSumTable
+=============================================
+
+Row {data-height=900}
+---------------------------------------------
+
+```{r, constSumTable}
+# df <- DFSource
+constNames <- extractConstName(df)
+func1 <- function(x) {
+  value <- unique(df[,x])
+  value <- as.character(value[1])
+}
+constValues <- vapply(constNames, func1, FUN.VALUE = character(1))
+dfTable <- data.frame(Const_Name=constNames, Value=constValues)
+DT::datatable(dfTable, rownames = FALSE, options = list(dom = 't'))
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+
+catVarSumTable
+=============================================
+
+Row {data-height=900}
+---------------------------------------------
+
+```{r, catVarSumTable}
+# dfCatVar <- Filter(is.factor, DFSource)
+# df <- DFSource
+catVarNames <- extractCatVarName(df)
+numVarNames <- extractNumVarName(df)
+# func1 <- function(x) {
+#   n_distinct(df[,x]) < 7 
+# }
+# bool <- vapply(numVarNames, func1, FUN.VALUE = logical(1))
+# fewLevelVarNames <- numVarNames[bool]
+# catVarNames <- union(catVarNames, fewLevelVarNames)
+if(length(catVarNames) == 0) {
+  "There is no categorical variable."
+  
+} else {
+  dfCatVar <- as.data.frame(df[,catVarNames])  #### as.data.frame이 없으면 범주형변수가 한개인 경우 dfCatVar은 벡터가 됨
+  colnames(dfCatVar)[1] <- catVarNames[1]     #### 범주형변수가 한개인 경우 df[,catVarNames] 가 변수명이됨.  변수명 수정 필요
+  dfCatVarLevels <- lapply(catVarNames, str_c)
+  # dfCatVarLevels <- list("cyl", "vs", "am","gear", "carb" )
+  names(dfCatVarLevels) <- catVarNames
+  # for(i in seq_along(catVarNames)) {
+  #   dfCatVarLevels[[catVarNames[i]]] <-
+  #   attr(dfCatVar[,catVarNames[i]][[1]], "levels")
+  # }
+  
+  for(x in seq_along(catVarNames)) {
+    if(is.factor(dfCatVar[,x])) {
+      dfCatVarLevels[[x]] <-
+        attr(dfCatVar[,x], "levels")
+    } else {
+      dfCatVarLevels[[x]] <-
+        as.character(unique(dfCatVar[,x]))
+  }
+}
+  
+  dfTableCatVar <- lapply(dfCatVarLevels,sort) %>% lapply(str_c,collapse=", ") %>%
+    as.data.frame 
+  tt <- t(dfTableCatVar)
+  colnames(tt) <- c("levels")
+  func1 <- function(x) {
+    length(unique(dfCatVarLevels[[x]]))
+  }
+  noLevels <- vapply(names(dfCatVarLevels), func1, FUN.VALUE = numeric(1))
+  noLevels <- as.data.frame(noLevels)
+  varNames <- as.data.frame(catVarNames)
+  tt <- cbind(varNames, noLevels, tt)
+  
+  DT::datatable(tt, rownames = FALSE, options=list(dom='t'))
+  
+}
+
+
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+CatVarBarPlot1 {data-navmenu="CatVarBarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, catVarBarPlot1}
+# df <- DFSource
+
+dfGraph <- df
+
+for(x in catVarNames) {
+    dfGraph[,x] <- as.factor(dfGraph[,x])
+}
+
+
+renderBarPlot <- function(x, i) {
+  ggObj <- ggplot(dfGraph) + geom_bar(aes_string(x=x))
+  ggObj 
+}
+
+if(!is.na(catVarNames[1]))
+  renderBarPlot(catVarNames[1],1)
+```
+
+
+
+###
+```{r, catVarBarPlot2}
+if(!is.na(catVarNames[2]))
+  renderBarPlot(catVarNames[2],2)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, catVarBarPlot3}
+if(!is.na(catVarNames[3]))
+  renderBarPlot(catVarNames[3],3)
+```
+
+###
+```{r, catVarBarPlot4}
+if(!is.na(catVarNames[4]))
+  renderBarPlot(catVarNames[4],4)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+CatVarBarPlot2 {data-navmenu="CatVarBarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, catVarBarPlot5}
+if(!is.na(catVarNames[5]))
+  renderBarPlot(catVarNames[5],5)
+```
+
+
+
+###
+```{r, catVarBarPlot6}
+if(!is.na(catVarNames[6]))
+  renderBarPlot(catVarNames[6],6)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, catVarBarPlot7}
+if(!is.na(catVarNames[7]))
+  renderBarPlot(catVarNames[7],7)
+```
+
+###
+```{r, catVarBarPlot8}
+if(!is.na(catVarNames[8]))
+  renderBarPlot(catVarNames[8],8)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+catVarLevelTable1{data-navmenu="catVarLevelTable"}
+=============================================
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_1}
+renderLevelNodata <- function(i) {
+  tl <- table(DFSource[,catVarNames[i]])
+  table1 <- t(as.matrix(tl))
+  row.names(table1) <- paste( catVarNames[i], "  : no of obs")
+  # varName <- paste0("Levels of " ,catVarNames[i])
+  DT::datatable(table1, options = list(dom = 't'), 
+                colnames = c('Levels'  = 1))
+}
+if(!is.na(catVarNames[1]))
+ renderLevelNodata(1)
+# table1
+# knitr::kable(table1)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_2}
+if(!is.na(catVarNames[2]))
+  renderLevelNodata(2)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_3}
+if(!is.na(catVarNames[3]))
+  renderLevelNodata(3)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_4}
+if(!is.na(catVarNames[4]))
+  renderLevelNodata(4)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_5}
+if(!is.na(catVarNames[5]))
+  renderLevelNodata(5)
+```
+
+Row {data-height=150}
+---------------------------------------------
+```{r, catVarLevelTable1_6}
+if(!is.na(catVarNames[6]))
+  renderLevelNodata(6)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+numVarSumTable
+=============================================
+
+Row {data-height=700}
+---------------------------------------------
+
+```{r, numVarSumTable}
+summary <- function(x) {
+  funs <- c(min, mean, max, sd)
+  lapply(funs, function(f) f(x, na.rm=TRUE))
+}
+
+dfContVar <- Filter(is.numeric, DFSource)
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+row.names(dfTableContVar) <- c("min", "mean", "max", "sd")
+# dfTableContVar <- as.data.frame(lapply(lapply(dfContVar, summary), unlist))
+
+func1 <- function(x) {
+  minValue <- dfTableContVar["min",x]
+  minDecimal <- nchar(as.character(minValue)) - nchar(as.character(floor(minValue)))
+  maxValue <- dfTableContVar["min",x]
+  maxDecimal <- nchar(as.character(maxValue)) - nchar(as.character(floor(maxValue)))
+  decimal <- max(minDecimal, maxDecimal)
+  decimal <- ifelse( decimal > 1, decimal - 1, decimal)
+  return(decimal)
+}
+
+decimalVec <- vapply(colnames(dfTableContVar), func1, FUN.VALUE=numeric(1))
+
+for(i in seq_along(colnames(dfTableContVar))) {
+    dfTableContVar[,i] <- round(dfTableContVar[,i], decimalVec[i])
+    dfTableContVar[,i] <- as.character(dfTableContVar[,i])
+}
+
+
+tt <- t(dfTableContVar)
+colnames(tt) <- c("최소", "평균", "최대", "편차")
+# colnames(tt) <- c("min", "mean", "max", "sd")
+DT::datatable(tt)
+
+# dfTableContVar["min","wt"]
+# DT::datatable(tt,
+#               rownames = c("min", "mean", "max", "sd"))
+              # rownames = c("최소", "평균", "최대", "편차")) 
+# %>%
+#   formatRound(c("mpg","cyl","disp","hp","drat","wt","qsec","vs","am","gear","carb"),
+#               c(1,0,1,0,2,3,2,0,0,0,0)) 
+
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+BarPlot1 {data-navmenu="BarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, bar1}
+# df <- DFSource
+numVar <- extractNumVarName(df)
+calcPValueShapiro <- function(x) {
+  x1 <- df[,x]
+  if(length(x1) > 5000) x1 <- sample(x1, 5000)
+  result <- shapiro.test(x1)
+  return(result[["p.value"]]*100)
+}
+
+pValueVec <- vapply(numVar, calcPValueShapiro, FUN.VALUE=numeric(1))
+orderRes <- order(pValueVec)
+numVar <- numVar[orderRes]
+pValueVec <- pValueVec[orderRes]
+
+dfGraph <- df
+
+renderBarPlot <- function(x, i) {
+  ggObj <- ggplot(dfGraph) + geom_bar(aes_string(x=x))
+  xAnnotate <- min(dfGraph[,x],na.rm=TRUE) +
+             0.7*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE)) 
+  yAnnotate <- 0.9 * max(ggplot_build(ggObj)$data[[1]]["y"])
+  labelAnnotate = paste0("P : ", round(pValueVec[i], digits=2),"%")
+  ggObj <- ggplot(dfGraph) + geom_bar(aes_string(x=x)) 
+  ggObj + annotate("text", x=xAnnotate, y=yAnnotate, label=labelAnnotate, color="black", size=6)
+}
+
+if(!is.na(numVar[1]))
+  renderBarPlot(numVar[1],1)
+```
+
+
+
+###
+```{r, bar2}
+if(!is.na(numVar[2]))
+  renderBarPlot(numVar[2],2)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, bar3}
+if(!is.na(numVar[3]))
+  renderBarPlot(numVar[3],3)
+```
+
+###
+```{r, bar4}
+if(!is.na(numVar[4]))
+  renderBarPlot(numVar[4],4)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+
+BarPlot2 {data-navmenu="BarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, bar5}
+if(!is.na(numVar[5]))
+  renderBarPlot(numVar[5],5)
+```
+
+
+
+###
+```{r, bar6}
+if(!is.na(numVar[6]))
+  renderBarPlot(numVar[6],6)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, bar7}
+if(!is.na(numVar[7]))
+  renderBarPlot(numVar[7],7)
+```
+
+###
+```{r, bar8}
+if(!is.na(numVar[8]))
+  renderBarPlot(numVar[8],8)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+BarPlot3 {data-navmenu="BarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, bar9}
+if(!is.na(numVar[9]))
+  renderBarPlot(numVar[9],9)
+```
+
+
+
+###
+```{r, bar10}
+if(!is.na(numVar[10]))
+  renderBarPlot(numVar[10],10)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, bar11}
+if(!is.na(numVar[11]))
+  renderBarPlot(numVar[11],11)
+```
+
+###
+```{r, bar12}
+if(!is.na(numVar[12]))
+  renderBarPlot(numVar[12],12)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+BarPlot4 {data-navmenu="BarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, bar13}
+if(!is.na(numVar[13]))
+  renderBarPlot(numVar[13],13)
+```
+
+
+
+###
+```{r, bar14}
+if(!is.na(numVar[14]))
+  renderBarPlot(numVar[14],14)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, bar15}
+if(!is.na(numVar[15]))
+  renderBarPlot(numVar[15],15)
+```
+
+###
+```{r, bar16}
+if(!is.na(numVar[16]))
+  renderBarPlot(numVar[16],16)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+BarPlot5 {data-navmenu="BarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, bar17}
+if(!is.na(numVar[17]))
+  renderBarPlot(numVar[17],17)
+```
+
+
+
+###
+```{r, bar18}
+if(!is.na(numVar[18]))
+  renderBarPlot(numVar[18],18)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, bar19}
+if(!is.na(numVar[19]))
+  renderBarPlot(numVar[19],19)
+```
+
+###
+```{r, bar20}
+if(!is.na(numVar[20]))
+  renderBarPlot(numVar[20],20)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+BarPlot6 {data-navmenu="BarPlot"}
+=============================================
+
+Row {data-height=450}
+---------------------------------------------
+
+###
+```{r, bar21}
+if(!is.na(numVar[21]))
+  renderBarPlot(numVar[21],21)
+```
+
+
+
+###
+```{r, bar22}
+if(!is.na(numVar[22]))
+  renderBarPlot(numVar[22],22)
+```
+
+Row {data-height=450}
+---------------------------------------------
+
+
+###
+```{r, bar23}
+if(!is.na(numVar[23]))
+  renderBarPlot(numVar[23],23)
+```
+
+###
+```{r, bar24}
+if(!is.na(numVar[24]))
+  renderBarPlot(numVar[24],24)
+```
+
+Row {data-height=100}
+---------------------------------------------
+
+
+
+

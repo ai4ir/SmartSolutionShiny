@@ -1,0 +1,488 @@
+---
+title: "모델링 결과 리포트"
+author: "C.S.Lee(ai4ir@daum.net, 010-5508-7437)"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    pathHTMLReport: NA
+    selModel: NA
+    aesList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+if(!library(ggiraph, logical.return=TRUE)) {
+    install.packages("ggiraph")
+    library(ggiraph)
+}
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+### 내부 디버깅 ###
+# df <- curSampleExplore
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+pathHTMLReport <- params$pathHTMLReport  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+selModel <- params$selModel  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+aesList <- params$aesList  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=12))
+theme_update(axis.text=element_text(size=8))
+
+df <- df %>% add_predictions(selModel) %>%
+    add_residuals(selModel)
+df <- df[!is.na(df$pred),]
+
+
+### refDF 생성
+d <- df[,aesList[["x"]]]
+refDF <- df
+if(length(aesList[["x"]]) == 1) {
+  refDF[,aesList[["x"]][1]] <- mean(d,na.rm=TRUE)
+  
+} else {
+  m <- lapply(d,mean)
+  mm <- as.data.frame(m)
+  for(i in 1:length(mm)) {
+      refDF[,aesList[["x"]][i]] <- mm[1,i]
+      # colnames(refDF)[i] <- aesList[["x"]][i]
+  }
+  
+}
+
+
+
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+# extractCatVarName <- function(df) {
+#   # numeric variable 만 추출
+#   varNameVec <- colnames(df)
+#   func1 <- function(x) {
+#     is.numeric(df[,x])
+#   }
+#   booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+#   catVar <- varNameVec[!booleanVec]
+# }
+#  # df <- dfReportCommon
+# aesList[["x"]] <- setdiff(aesList[["x"]], 
+#                           c(aesList[["y"]], aesList[["size"]], aesList[["shape"]]))
+# dfX <- df[,aesList[["x"]]]
+# # x <- df[,"wt"]
+# y <- df[,aesList[["y"]]]
+# calcR2 <- function(x) {
+#   df2 <- data.frame(x=x,y=y)
+#   x2 <- x * x
+#   modelResult <- lm(y~x + x2, data=df2)
+#   # adjR2 <- broom::glance(modelResult)[["adj.r.squared"]] # 음수값이 나오는 경우 발생
+#   R2 <- broom::glance(modelResult)[["r.squared"]]
+# }
+# R2Vec <- vapply(dfX, calcR2, numeric(1))
+# meltR <- melt(R2Vec)
+# orderR <- order(meltR$value, decreasing=TRUE)
+# aesList[["x"]] <- row.names(meltR)[orderR]
+
+
+renderScatterPlot <- function(df, x, y, color=NULL, size=NULL, shape=NULL, tooltip = NULL, data_id=NULL, labelAnnotate=NULL, yLim=NULL) {
+  # x="wt"; y="mpg"; color="cyl"
+    dfGraph <- df[,c(x,y,color, size, shape,tooltip, data_id)] 
+    if(length(dfGraph[,color])<10)
+        dfGraph[,color] <- as.factor(dfGraph[,color])
+    
+    dfGraph[,size] <- as.factor(dfGraph[,size])
+    dfGraph[,shape] <- as.factor(dfGraph[,shape])
+    if(!is.null(color) && !is.factor(dfGraph[,color])  && length(unique(dfGraph[,color])) < 6 && x!=color) {
+      dfGraph[,color] <- as.factor(dfGraph[,color])
+    }
+    if(is.null(tooltip)) {
+      tooltip <- "tooltip"
+      dfGraph <- dfGraph %>% mutate(tooltip=paste(as.character(dfGraph[,y]), "\n", dfGraph[,x],
+                                "\n",dfGraph[,color], "\n", dfGraph[,data_id]))
+    }
+
+
+    gg1 <- ggplot(dfGraph) +
+      geom_point_interactive(aes_string(x = x, y=y, color = color, size=size, shape=shape,
+                                      tooltip = tooltip, data_id = data_id), size = 1) +
+        guides(color = guide_legend(override.aes = list(size = 1)))  +
+        theme(legend.title = element_text(size = 8),
+            legend.text  = element_text(size = 6),
+            legend.key.size = unit(0.1, "lines"))
+    if(!is.null(labelAnnotate)) {
+      xAnnotate = min(dfGraph[,x],na.rm=TRUE) +
+                       0.10*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,y],na.rm=TRUE))
+      yAnnotate = min(dfGraph[,y],na.rm=TRUE) +
+                       0.90*(max(dfGraph[,y],na.rm=TRUE)-min(dfGraph[,y],na.rm=TRUE))
+      gg1 <- gg1 + 
+              annotate("text",
+               x=xAnnotate, 
+               y=yAnnotate, label=labelAnnotate, color="black", size=4) 
+    }
+    
+    if(!is.null(yLim)) {
+      gg1 <- gg1 +
+        ylim(yLim[1], yLim[2])
+    }
+    gg1
+
+}
+
+renderScatterSet <- function(xVarNo, aesList) {
+  gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL; yLim <- c(0,0)
+  yLim[1] <- min(df[,aesList[["y"]]], na.rm=TRUE)
+  yLim[2] <- max(df[,aesList[["y"]]], na.rm=TRUE)
+  
+  gg1 <- renderScatterPlot(df, x=aesList[["x"]][xVarNo], y=aesList[["y"]], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+  gg2 <- renderScatterPlot(df, x=aesList[["x"]][xVarNo], y="resid", color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+  dfGraph <- refDF
+  dfGraph[,aesList[["x"]][xVarNo]] <- df[,aesList[["x"]][xVarNo]]
+  dfGraph <- dfGraph %>% add_predictions(selModel)
+  gg3 <- renderScatterPlot(dfGraph, x=aesList[["x"]][xVarNo], y="pred", color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+  dfGraph <- dfGraph %>% mutate(modY=pred+resid)
+  gg4 <- renderScatterPlot(dfGraph, x=aesList[["x"]][xVarNo], y="modY", color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]], yLim=yLim)
+  ggAll <- girafe( ggobj = plot_grid(gg1, gg2, gg3, gg4, ncol=2), width_svg = 8, height_svg = 4)
+  girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+  
+}
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Summary Table  
+ - [predMeas] page  
+ - [modelQuality] page  
+ - [Domain] page 
+ 
+ 
+predMeas{data-navmenu="Summary"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, predMeas}
+modelQuality <- broom::glance(selModel)
+labelAnnotate <- paste("adj. R2 : ",round(modelQuality[1,"adj.r.squared"],3), "\n",
+                       modelQuality[1,"sigma"])
+gg1 <- renderScatterPlot(df, x="pred", y=aesList[["y"]], color=aesList[["color"]],
+                size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                data_id=aesList[["data_id"]], labelAnnotate=labelAnnotate) 
+
+ggAll <- girafe( ggobj = plot_grid(gg1, ncol=1), width_svg = 8, height_svg = 4)
+girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+modelQuality{data-navmenu="Summary"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+### 
+```{r, modelCoeff}
+selModel
+```
+
+Row {data-height=470}
+---------------------------------------------
+### 
+```{r, modelQuality}
+DT::datatable(broom::glance(selModel))
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Domain{data-navmenu="Summary"}
+=============================================
+
+
+Row {data-height=700}
+---------------------------------------------
+
+```{r, numVarSumTable}
+mySummary <- function(x) {
+  funs <- c(min, mean, max, sd)
+  lapply(funs, function(f) f(x, na.rm=TRUE))
+}
+
+dfContVar <- Filter(is.numeric, df)
+dfTableContVar <- lapply(dfContVar, mySummary) %>% lapply(unlist) %>% as.data.frame
+row.names(dfTableContVar) <- c("min", "mean", "max", "sd")
+# dfTableContVar <- as.data.frame(lapply(lapply(dfContVar, summary), unlist))
+
+func1 <- function(x) {
+  minValue <- dfTableContVar["min",x]
+  minDecimal <- nchar(as.character(minValue)) - nchar(as.character(floor(minValue)))
+  maxValue <- dfTableContVar["max",x]
+  maxDecimal <- nchar(as.character(maxValue)) - nchar(as.character(floor(maxValue)))
+  decimal <- max(minDecimal, maxDecimal)
+  decimal <- ifelse( decimal > 1, decimal - 1, decimal)
+  return(decimal)
+}
+
+decimalVec <- vapply(colnames(dfTableContVar), func1, FUN.VALUE=numeric(1))
+
+for(i in seq_along(colnames(dfTableContVar))) {
+    dfTableContVar[,i] <- round(dfTableContVar[,i], decimalVec[i])
+    dfTableContVar[,i] <- as.character(dfTableContVar[,i])
+}
+
+
+tt <- t(dfTableContVar)
+noNA <- as.vector(colSums(is.na(dfContVar)))
+tt <- cbind(tt, noNA)
+colnames(tt) <- c("최소", "평균", "최대", "편차", "NA 갯수")
+
+DT::datatable(tt, options = list( pageLength = 15))
+
+# dfTableContVar["min","wt"]
+# DT::datatable(tt,
+#               rownames = c("min", "mean", "max", "sd"))
+              # rownames = c("최소", "평균", "최대", "편차")) 
+# %>%
+#   formatRound(c("mpg","cyl","disp","hp","drat","wt","qsec","vs","am","gear","carb"),
+#               c(1,0,1,0,2,3,2,0,0,0,0)) 
+
+```
+
+`r aesList[["x"]][1]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY1}
+if(!is.na(x=aesList[["x"]][1])) {
+  renderScatterSet(1, aesList=aesList)
+}
+
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][2]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY2}
+
+if(!is.na(x=aesList[["x"]][2])) {
+  renderScatterSet(2, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][3]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY3}
+
+if(!is.na(x=aesList[["x"]][3])) {
+  renderScatterSet(3, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][4]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY4}
+if(!is.na(x=aesList[["x"]][4])) {
+  renderScatterSet(4, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+
+`r aesList[["x"]][5]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY5}
+if(!is.na(x=aesList[["x"]][5])) {
+  renderScatterSet(5, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][6]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY6}
+if(!is.na(x=aesList[["x"]][6])) {
+  renderScatterSet(6, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][7]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY7}
+if(!is.na(x=aesList[["x"]][7])) {
+  renderScatterSet(7, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][8]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY8}
+if(!is.na(x=aesList[["x"]][8])) {
+  renderScatterSet(8, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][9]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY9}
+if(!is.na(x=aesList[["x"]][9])) {
+  renderScatterSet(9, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][10]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY10}
+if(!is.na(x=aesList[["x"]][10])) {
+  renderScatterSet(10, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][11]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY11}
+if(!is.na(x=aesList[["x"]][11])) {
+  renderScatterSet(11, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+`r aesList[["x"]][12]`{data-navmenu="ModY"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, modY12}
+if(!is.na(x=aesList[["x"]][12])) {
+  renderScatterSet(12, aesList=aesList)
+}
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+

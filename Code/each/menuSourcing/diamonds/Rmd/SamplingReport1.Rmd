@@ -1,0 +1,257 @@
+---
+title: "ReportSourcing2"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    DFSource: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+DFSource <- DFSource
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Summary Table  
+ - [ContVarTable] page  
+ - [CatVarTable] page  
+ 
+Box Plot  
+ - [cut] page  
+ - [color] page 
+ 
+Scatter Plot  
+ - [price_carat] page  
+ 
+ 
+
+ 
+
+ContVarTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+No. of Observation : `r NROW(DFSource)`
+No. of variables : `r NCOL(DFSource)`
+
+Row {data-height=485}
+---------------------------------------------
+
+### 
+```{r, contVarTable1}
+summary <- function(x) {
+  funs <- c(min, mean, max, sd)
+  lapply(funs, function(f) f(x, na.rm=TRUE))
+}
+
+dfContVar <- Filter(is.numeric, DFSource)
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+# dfTableContVar <- as.data.frame(lapply(lapply(dfContVar, summary), unlist))
+
+# row.names(dfTableContVar) <- c("최소", "평균", "최대", "편차")
+DT::datatable(dfTableContVar,
+              rownames = c("min", "mean", "max", "sd")) %>%
+  formatRound(c("carat","depth","table","price","x","y","z"),
+              c(2,1,0,0,2,2,2)) 
+
+
+```
+
+Row {data-height=485}
+---------------------------------------------
+### 
+```{r, contVarTable2}
+summary <- function(x) {
+  funs <- c(NROW(x))
+}
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+
+DT::datatable(dfTableContVar)
+```
+
+
+CatVarTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=170}
+---------------------------------------------
+
+### 
+```{r, catVarTable1}
+# dfCatVar <- Filter(is.factor, DFSource)
+catVarNames <- c("cut", "color", "clarity")
+dfCatVar <- DFSource[,catVarNames]
+dfCatVarLevels <- list("cut", "color", "clarity")
+names(dfCatVarLevels) <- catVarNames
+for(i in 1:NROW(catVarNames)) {
+  if(is.factor(DFSource[,catVarNames[i]][[1]])) {
+    dfCatVarLevels[[catVarNames[i]]] <-
+      attr(diamonds[,catVarNames[i]][[1]], "levels")
+  } else {
+    dfCatVarLevels[[catVarNames[i]]] <-
+      as.character(unique(DFSource[,catVarNames[i]]))
+  }
+}
+
+dfTableCatVar <-dfCatVarLevels %>% lapply(str_c,collapse=", ") %>%
+  as.data.frame 
+DT::datatable(dfTableCatVar, options=list(dom='t'))
+```
+
+Row {data-height=800}
+---------------------------------------------
+### 
+```{r, catVarTable2}
+renderTable <- function(dfGroups) {
+  calcMean <- function(index, varName) {
+    valueVec <- dfContVar[index,varName]
+    mean(valueVec, na.rm=TRUE)
+  }
+  noRecord <- lapply(dfGroups$.rows, NROW) %>% unlist
+  price <- lapply(dfGroups$.rows, calcMean, varName="price") %>% unlist
+  carat <- lapply(dfGroups$.rows, calcMean, varName="carat") %>% unlist
+  x <- lapply(dfGroups$.rows, calcMean, varName="x") %>% unlist
+  y <- lapply(dfGroups$.rows, calcMean, varName="y") %>% unlist
+  dfTable <- dfGroups %>% mutate(noRecord=noRecord, price=price, carat=carat, x=x, y=y) %>% 
+    select(-.rows)  
+  DT::datatable(dfTable, rownames=FALSE, 
+                options=list(dom='t')) %>%
+    formatRound(c("price", "carat", "x", "y"), c(0,2,2,2))
+                # options=list(dom='t', autoWidth=TRUE, columnDefs=list(list(width='200px'))))
+  
+}
+dfGroups <- DFSource %>% group_by(cut) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+### 
+```{r, catVarTable3}
+dfGroups <- DFSource %>% group_by(color) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+### 
+```{r, catVarTable4}
+dfGroups <- DFSource %>% group_by(clarity) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+cut{data-navmenu="Box Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, cut_boxplot1}
+ ggplot(data=DFSource, mapping=aes(x=cut, y=price)) + geom_boxplot(mapping=aes(group=cut))
+```
+
+### 
+```{r, cut_boxplot2}
+ ggplot(data=DFSource, mapping=aes(x=cut, y=carat)) + geom_boxplot(mapping=aes(group=cut))
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, cut_boxplot3}
+ ggplot(data=DFSource, mapping=aes(x=cut, y=x)) + geom_boxplot(mapping=aes(group=cut))
+```
+
+### 
+```{r, cut_boxplot4}
+ ggplot(data=DFSource, mapping=aes(x=cut, y=y)) + geom_boxplot(mapping=aes(group=cut))
+```
+
+color{data-navmenu="Box Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, color_boxplot1}
+ ggplot(data=DFSource, mapping=aes(x=color, y=price)) + geom_boxplot(mapping=aes(group=color))
+```
+
+### 
+```{r, color_boxplot2}
+ ggplot(data=DFSource, mapping=aes(x=color, y=carat)) + geom_boxplot(mapping=aes(group=color))
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, color_boxplot3}
+ ggplot(data=DFSource, mapping=aes(x=color, y=x)) + geom_boxplot(mapping=aes(group=color))
+```
+
+### 
+```{r, color_boxplot4}
+ ggplot(data=DFSource, mapping=aes(x=color, y=y)) + geom_boxplot(mapping=aes(group=color))
+```
+
+price_carat {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, price_carat_1}
+renderScatterPlot <- function(x,y,z) {
+  paramsVec <- c(x,y,z)
+  dfGraph <- DFSource[,paramsVec]
+  # dfGraph[,color] <- as.factor(dfGraph[,color])
+  ggplot(dfGraph, aes_string(x=x, y=y, color=z)) + geom_point() 
+}
+#renderScatterPlot(x="carat", y="price", z="cut")
+```
+
+### 
+```{r, price_carat_2}
+#renderScatterPlot(x="carat", y="price", z="color")
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, price_carat_3}
+#renderScatterPlot(x="carat", y="price", z="clarity")
+```
+
+### 
+```{r, price_carat_4}
+# renderScatterPlot(x="disp", y="mpg", color="carb")
+```
+

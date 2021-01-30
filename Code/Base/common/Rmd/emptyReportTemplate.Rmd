@@ -1,0 +1,88 @@
+---
+title: "Welds Defects"
+author: "C.S.Lee(ai4ir@daum.net, 010-5508-7437)"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    aesList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+### 내부 디버깅 ###
+# DFSourceRmd <- DFSource
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Summary Table  
+ - [Inquiry] page  
+ - [Property] page  
+ - [Composition] page  
+ 
+
+Inquiry{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, table1}
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Property{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, table2}
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Composition{data-navmenu="Summary Table"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+### 
+```{r, table3}
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`

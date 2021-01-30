@@ -1,0 +1,293 @@
+---
+title: "탐색 그래프 Report One X"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    aesList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+# Sys.setlocale( "LC_ALL", "C")
+knitr::opts_chunk$set(echo=FALSE)
+options(warn=-1)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+if(!library(ggiraph, logical.return=TRUE)) {
+    install.packages("ggiraph")
+    library(ggiraph)
+}
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+### 내부 디버깅 ###
+# df <- dfReportCommon
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+pathHTMLReport <- params$pathHTMLReport  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=10))
+theme_update(axis.text=element_text(size=8))
+# theme_update(legend.text = element_text(size=8))
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+extractCatVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  catVar <- varNameVec[!booleanVec]
+}
+ # df <- dfReportCommon
+aesList[["y"]] <- setdiff(aesList[["y"]], 
+                          c(aesList[["x"]], aesList[["size"]], aesList[["shape"]]))
+x <- df[,aesList[["x"]]]
+# x <- df[,"wt"]
+dfY <- df[,aesList[["y"]]]
+
+calcR2Fit1 <- function(y) {
+  df2 <- data.frame(x=x,y=y)
+  modelResult <- lm(y~x , data=df2)
+  # adjR2 <- broom::glance(modelResult)[["adj.r.squared"]] # 음수값이 나오는 경우 발생
+  R2 <- broom::glance(modelResult)[["r.squared"]]
+}
+calcR2Fit2 <- function(y) {
+  df2 <- data.frame(x=x,y=y)
+  x2 <- x * x
+  modelResult <- lm(y~x + x2, data=df2)
+  # adjR2 <- broom::glance(modelResult)[["adj.r.squared"]] # 음수값이 나오는 경우 발생
+  R2 <- broom::glance(modelResult)[["r.squared"]]
+}
+
+switch(aesList[["fitOption"]],
+       NoFit = {},
+       Fit1 = {
+         R2Vec <- vapply(dfY, calcR2Fit1, numeric(1))
+       },
+       Fit2 = {
+         R2Vec <- vapply(dfY, calcR2Fit2, numeric(1))
+       },
+       {}
+)
+if(aesList[["fitOption"]]!="NoFit") {
+  meltR <- melt(R2Vec)
+  orderR <- order(meltR$value, decreasing=TRUE)
+  aesList[["y"]] <- row.names(meltR)[orderR]
+}
+
+renderScatterPlot <- function(x, y, color=NULL, size=NULL, shape=NULL, tooltip = NULL, data_id=NULL) {
+  # x="wt"; y="mpg"; color="cyl"
+    dfGraph <- df[,c(x,y,color, size, shape,tooltip, data_id)] 
+    if(length(dfGraph[,color])<10)
+        dfGraph[,color] <- as.factor(dfGraph[,color])
+    
+    dfGraph[,size] <- as.factor(dfGraph[,size])
+    dfGraph[,shape] <- as.factor(dfGraph[,shape])
+    if(!is.null(color) && !is.factor(dfGraph[,color])  && length(unique(dfGraph[,color])) < 6 && x!=color) {
+      dfGraph[,color] <- as.factor(dfGraph[,color])
+    }
+
+    labelAnnotate <- NULL
+    if(!is.Date(dfGraph[,x]) & !is.Date(dfGraph[,y]) & !is.POSIXct(dfGraph[,x]) & !is.POSIXct(dfGraph[,y])) {
+        dfModel <- dfGraph[,c(x, y)]
+        colnames(dfModel) <- c("xVec", "yVec")
+        switch(aesList[["fitOption"]],
+               NoFit = {},
+               Fit1 = {
+                   model <- lm(yVec ~ xVec,data=dfModel)
+                   myfunc <- function(x) {
+                       model[["coefficients"]][1] + model[["coefficients"]][2] * x 
+                   }
+                   R2 <- broom::glance(model)[["r.squared"]]
+                   labelAnnotate <- paste0("R2 : ", round(R2,3))
+                   xAnnotate <-  min(dfGraph[,x],na.rm=TRUE) +
+                       0.8*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
+               },
+               Fit2 = {
+                   dfModel <- dfModel %>% mutate(xVec2 = xVec * xVec)
+                   model <- lm(yVec ~ xVec + xVec2,data=dfModel)
+                   myfunc <- function(x) {
+                       model[["coefficients"]][1] + model[["coefficients"]][2] * x + model[["coefficients"]][3]*x*x
+                   }
+                   R2 <- broom::glance(model)[["r.squared"]]
+                   labelAnnotate <- paste0("R2 : ", round(R2,3))
+                   xAnnotate <-  min(dfGraph[,x],na.rm=TRUE) +
+                       0.8*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
+
+               },
+               {}
+        )
+
+    }
+    
+    
+    if(is.null(tooltip)) {
+      tooltip <- "tooltip"
+      dfGraph <- dfGraph %>% mutate(tooltip=paste(as.character(dfGraph[,y]), "\n", dfGraph[,x], "\n",
+                                          dfGraph[,color], "\n", dfGraph[,data_id]))
+    }
+
+    
+    if(!is.numeric(dfGraph[,color]) & 
+       length(unique(dfGraph[,color])) > 20 )
+    {
+      kk <- table(dfGraph[,color])
+      kk <- kk[order(kk, decreasing=TRUE)]
+      kk <- kk[1:20]
+      dfGraph[,color] <- ifelse(dfGraph[,color] %in% names(kk), 
+             dfGraph[,color], "기타"
+             )
+    }  
+    
+    gg1 <- ggplot(dfGraph) +
+      geom_point_interactive(aes_string(x = x, y=y, color = color, size=size, shape=shape,
+                                      tooltip = tooltip, data_id = data_id), size = 1) +
+      guides(color = guide_legend(override.aes = list(size = 1))) +
+      theme(legend.title = element_text(size = 8),
+            legend.text  = element_text(size = 6),
+            legend.key.size = unit(0.1, "lines"))
+
+    if(!is.null(labelAnnotate)) {
+        gg1 <- gg1 +  stat_function(fun=myfunc, geom="line", color="black") +
+            annotate("text",
+                     x=xAnnotate, 
+                     y=min(dfGraph[,y], na.rm=TRUE), label=labelAnnotate, color="black", size=2)
+    }
+
+    return(gg1)
+    
+}
+
+renderScatterPlotSet <- function(yVarNo) {
+gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
+if(!is.na(x=aesList[["y"]][yVarNo]))
+  gg1 <- renderScatterPlot(x=aesList[["x"]], y=aesList[["y"]][yVarNo], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["y"]][yVarNo+1]))
+  gg2 <- renderScatterPlot(x=aesList[["x"]], y=aesList[["y"]][yVarNo+1], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+if(!is.na(x=aesList[["y"]][yVarNo+2]))
+  gg3 <- renderScatterPlot(x=aesList[["x"]], y=aesList[["y"]][yVarNo+2], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+if(!is.na(x=aesList[["y"]][yVarNo+3]))
+  gg4 <- renderScatterPlot(x=aesList[["x"]], y=aesList[["y"]][yVarNo+3], color=aesList[["color"]],
+                    size=aesList[["size"]], shape=aesList[["shape"]], tooltip=aesList[["tooltip"]],
+                    data_id=aesList[["data_id"]])
+
+ggAll <- girafe( ggobj = plot_grid(gg1, gg2,gg3,gg4, ncol=2), width_svg = 8, height_svg = 4)
+girafe_options(x = ggAll,  opts_tooltip(use_fill=TRUE), opts_hover(css = "fill:red;stroke:orange;r:3pt;"))
+  
+}
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+
+Scatter Plot  
+ - [Scatter1] page  
+ - [Scatter2] page   
+ - [Scatter3] page  
+ - [Scatter4] page  
+ - [Scatter5] page  
+
+
+
+Scatter1 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=1000}
+---------------------------------------------
+
+### 
+```{r, scatter_1}
+renderScatterPlotSet(1)
+
+```
+
+Scatter2 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=1000}
+---------------------------------------------
+
+### 
+```{r, scatter_2}
+renderScatterPlotSet(5)
+```
+
+
+Scatter3 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=1000}
+---------------------------------------------
+
+### 
+```{r, scatter_3}
+renderScatterPlotSet(9)
+```
+
+Scatter4 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=1000}
+---------------------------------------------
+
+### 
+```{r, scatter_4}
+
+renderScatterPlotSet(13)
+```
+
+
+Scatter5 {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, scatter_5}
+renderScatterPlotSet(17)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Scatter5, Publication Date : `r params$pubDate`
+
