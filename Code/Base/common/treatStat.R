@@ -34,6 +34,15 @@ calcPValueShapiro <- function(x, df) {
   return(pValue)
 }
 
+### df <- DFSource; y <-  "NRL_FirstTest" ; x <- "PL_REFUR_NO"; pValue <- calcPValueShapiro(df,x) 
+calcPValueFisherExact <- function(x,y, df) {
+  df <- df[,c(x,y)]
+  fmla <- as.formula(paste0(" ~ ",x,"+ ", y))
+  fisherExactResult <- xtabs(fmla,df) %>% fisher.test()
+  pValue <- fisherExactResult[["p.value"]]*100
+  return(pValue)
+}
+
 # df <- DFSource; x <- "am"; y <- "mpg"; pValue <- calcPValueOneYAov("am",df, "mpg")
 # catVar <- c("am","vs")
 # pValueVec <- vapply(catVar, calcPValueOneYAov,df,"mpg", FUN.VALUE=numeric(1))

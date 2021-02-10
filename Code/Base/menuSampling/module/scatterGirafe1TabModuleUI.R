@@ -220,13 +220,14 @@ scatterGirafe1TabModule <- function(input, output, session) {
         })
         
         clusterLasso <- ifelse(curSampleExplore[,"rowNoSource"] %in% selected, "inLasso", "outLasso")
-        attr(clusterLasso, "label") <- "cluseter By Lasso" ; 
+        attr(clusterLasso, "label") <- "cluseter By Lasso" ; attr(clusterLasso, "labelShort") <- "cluseterByLasso" ;
         curSampleExplore <<- curSampleExplore %>% 
             mutate(clusterLassoSel = clusterLasso)
-        curSampleExplore[,"bHOT"] <<- ifelse(clusterLasso=="inLasso","Hot", "Normal")
- 
         
-        # oredrVF <<- oredrVFcluster(curSampleExplore, "clusterLassoSel")
+        bHOT <- ifelse(clusterLasso=="inLasso","Hot", "Normal")
+        attr(bHOT, "label") <- "bHOT" ;   attr(bHOT, "labelShort") <- "bHOT" ; 
+        curSampleExplore[,"bHOT"] <<- bHOT
+        curSampleExplore <<- sticky_all(curSampleExplore)
         
         aesList[["clusterMethod"]][1] <<- "clusterLassoSel"
         

@@ -107,11 +107,15 @@ replyButtonBisectArea <- function(input, output, session) {
     }
     clusterSamplingGUI <- vapply(selectBool, func1, FUN.VALUE=character(1))
     attr(clusterSamplingGUI, "label") <- "cluseter By Sampling GUI" ; 
+    attr(clusterSamplingGUI, "labelShort") <- "clusterSamplingGUI" ;
     curSampleExplore <<- curSampleExplore %>% select(setdiff(colnames(curSampleExplore),"clusterSamplingGUI"))
     curSampleExplore <<- curSampleExplore %>% 
       mutate(clusterSamplingGUI = clusterSamplingGUI)
     aesList[["clusterMethod"]][1] <<- "clusterSamplingGUI"
-    curSampleExplore[,"bHOT"] <<- ifelse(clusterSamplingGUI=="inside","Hot", "Normal")
+    bHOT <- ifelse(clusterSamplingGUI=="inside","Hot", "Normal")
+    attr(bHOT, "label") <- "bHOT" ;   attr(bHOT, "labelShort") <- "bHOT" ; 
+    curSampleExplore[,"bHOT"] <<- bHOT
+    curSampleExplore <<- sticky_all(curSampleExplore)
     
 
     # familyGangJong <- unique(curSampleExplore$GangJong)

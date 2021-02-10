@@ -25,7 +25,7 @@ samplingMainUI <- function() {
                                          dateRangeInput('dateRange1',
                                                         label = 'Date range input: yyyy-mm-dd',
                                                         # start = Sys.Date() - 2, end = Sys.Date() + 2
-                                                        start = ymd("2020-07-01"), end = Sys.Date() + 2
+                                                        start = ymd("2020-01-01"), end = Sys.Date() + 2
                                          ),
                                          renderDomainUI_2()
                                          ),
@@ -94,7 +94,7 @@ samplingMain <- function(input, output, session) {
   # samplingGUI Tab에서의 범용 리포트
   observeEvent(input$renderReportCommonSample, {
     dfReportCommon <<- curSampleExplore
-    fromReportCommon <<- "_sample"
+    # fromReportCommon <<- "_sample"
     showModal(ModalActionButtonsReportCommon())
     # hideButton <- c("renderReportCommonPlotViolinOneY")
     hideButton <- NA
@@ -106,7 +106,7 @@ samplingMain <- function(input, output, session) {
   # scatterGirafe1 Tab에서의 범용 리포트
   observeEvent(input$renderReportCommonSample2, {
     dfReportCommon <<- curSampleExplore
-    fromReportCommon <<- "_sample"
+    # fromReportCommon <<- "_sample"
     showModal(ModalActionButtonsReportCommon())
   })
   ### 범용 리포트 처리를 위한 나머지 이벤트 핸들러는 sourcingMain과 같이 사용함 ###

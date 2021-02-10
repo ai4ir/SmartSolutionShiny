@@ -9,7 +9,7 @@ extractConstName <- function(df) {
   # catVar <- varNameVec[!booleanVec]
   constName <-  varNameVec[booleanVec]
 }
-## numeric only, no date ###
+## numeric only, no date ### var <- extractNumVarName(curSampleExplore)
 extractNumVarName <- function(df) {
   df <- as.data.frame(df)
   # numeric variable 만 추출
@@ -20,6 +20,22 @@ extractNumVarName <- function(df) {
   booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
   # catVar <- varNameVec[!booleanVec]
   numVar <-  varNameVec[booleanVec]
+}
+
+### date only  ### var <- extractDateVarName(curSampleExplore)
+extractDateVarName <- function(df) {
+  df <- as.data.frame(df)
+  # numeric variable 만 추출
+  
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    bool1 <- is.Date(df[,x])  && (length(setdiff(unique(df[,x]),NA)) > 1)
+    bool2 <- is.POSIXct(df[,x])  && (length(setdiff(unique(df[,x]),NA)) > 1)
+    bool3 <- is.difftime(df[,x])  && (length(setdiff(unique(df[,x]),NA)) > 1)
+    return(bool1 | bool2 | bool3) 
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  dateVar <-  varNameVec[booleanVec]
 }
 ### numeric or date  ### 
 extractContVarName <- function(df) {

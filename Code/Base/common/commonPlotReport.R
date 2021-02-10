@@ -49,20 +49,32 @@ treatModalCommonPlot <- function(input, output, session) {
     switch(curCommonPlot, 
            ScatterOneY = {
              numVar <- rownames(orderVFcluster(dfReportCommon))
+             choiceNames <- attr(dfReportCommon[,numVar[1]],"labelShort")
+             for(i in 2:length(numVar)) {
+               choiceNames <- c(choiceNames, attr(dfReportCommon[,numVar[i]],"labelShort") )
+             }
              strExplain <- "nuneric 변수만 제공됬습니다."
-             showModal(ModalRadioButtons(numVar, numVar,"okMCP", "selModal", "ScatterOneY", "y 변수 선정",strExplain))
+             showModal(ModalRadioButtons(choiceNames, numVar,"okMCP", "selModal", "ScatterOneY", "y 변수 선정",strExplain))
 
            },
            ViolinOneY = {
+             choiceNames <- attr(dfReportCommon[,numVar[1]],"labelShort")
+             for(i in 2:length(numVar)) {
+               choiceNames <- c(choiceNames, attr(dfReportCommon[,numVar[i]],"labelShort") )
+             }
              strExplain <- "nuneric 변수만 제공됬습니다."
-             showModal(ModalRadioButtons(numVar, numVar,"okMCP", "selModal", "violinOneY", "y 변수 선정",strExplain))
+             showModal(ModalRadioButtons(choiceNames, numVar,"okMCP", "selModal", "violinOneY", "y 변수 선정",strExplain))
            },
            {
              numVar <- extractNumVarName(dfReportCommon)
               # numVar <- rownames(orderVFcluster(dfReportCommon))
              numVar <- c("ALL.ALL",numVar)
+             choiceNames <- "All.ALL"
+             for(i in 2:length(numVar)) {
+               choiceNames <- c(choiceNames, attr(dfReportCommon[,numVar[i]],"labelShort") )
+             }
              strExplain <- "nuneric 변수만 제공됬습니다."
-             showModal(ModalCheckboxGroup(numVar, numVar, "okMCP", "selModal", "y 선정 대화창", label="y 선정", strExplain, selected="ALL.ALL"))
+             showModal(ModalCheckboxGroup(choiceNames, numVar, "okMCP", "selModal", "y 선정 대화창", label="y 선정", strExplain, selected="ALL.ALL"))
            }
     )
     
@@ -76,28 +88,44 @@ treatModalCommonPlot <- function(input, output, session) {
     switch(curCommonPlot, 
            ScatterOneX = {
              numVar <- rownames(orderVFcluster(dfReportCommon))
+             choiceNames <- attr(dfReportCommon[,numVar[1]],"labelShort")
+             for(i in 2:length(numVar)) {
+               choiceNames <- c(choiceNames, attr(dfReportCommon[,numVar[i]],"labelShort") )
+             }
              strExplain <- "numeric 변수만 선택됬습니다."
-             showModal(ModalRadioButtons(numVar, numVar,"okMCP", "selModal", "ScatterOneX", "x 변수 선정",strExplain))
+             showModal(ModalRadioButtons(choiceNames, numVar,"okMCP", "selModal", "ScatterOneX", "x 변수 선정",strExplain))
              
            },
            ViolinOneY = {
-             var <- selectVarWithGivenLevels(df=dfReportCommon, minNoLevels=1, maxNoLevels=7) 
-             strExplain <- "수준이 2이상 6 이하인 변수만 선택됬습니다."
+             var <- selectVarWithGivenLevels(df=dfReportCommon, minNoLevels=1, maxNoLevels=6) 
+             choiceNames <- attr(dfReportCommon[,var[1]],"labelShort")
+             for(i in 2:length(var)) {
+               choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+             }
+             strExplain <- "수준이 1이상 6 이하인 변수만 선택됬습니다."
              showModal(ModalCheckboxGroup(title="ViolinOneY : X 선정 대화창", modalCheckboxID="selModal", label="ViolinOneY : X 선정",
-                                          choiceNames=var, choiceValues=var,
+                                          choiceNames=choiceNames, choiceValues=var,
                                           modalOKButtonID="okMCP", strExplain=strExplain, selected="ALL.ALL"))
            },
            ViolinOneX = {
-             var <- selectVarWithGivenLevels(df=dfReportCommon, minNoLevels=1, maxNoLevels=7) 
-             strExplain <- "수준이 2이상 6 이하인 변수만 선택됬습니다."
-             showModal(ModalRadioButtons(var, var,"okMCP", "selModal", "ViolinOneX", "x 변수 선정",strExplain))
+             var <- selectVarWithGivenLevels(df=dfReportCommon, minNoLevels=1, maxNoLevels=6) 
+             choiceNames <- attr(dfReportCommon[,var[1]],"labelShort")
+             for(i in 2:length(var)) {
+               choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+             }
+             strExplain <- "수준이 1이상 6 이하인 변수만 선택됬습니다."
+             showModal(ModalRadioButtons(choiceNames, var,"okMCP", "selModal", "ViolinOneX", "x 변수 선정",strExplain))
              
            },
            {
              numVar <- rownames(orderVFcluster(dfReportCommon))
              numVar <- c("ALL.ALL",numVar)
+             choiceNames <- "ALL.ALL"             
+             for(i in 2:length(numVar)) {
+               choiceNames <- c(choiceNames, attr(dfReportCommon[,numVar[i]],"labelShort") )
+             }
              showModal(ModalCheckboxGroup(title="X 선정 대화창", modalCheckboxID="selModal", label="X 선정",
-                                          choiceNames=numVar, choiceValues=numVar,
+                                          choiceNames=choiceNames, choiceValues=numVar,
                                           modalOKButtonID="okMCP", selected="ALL.ALL"))
            }
            )
@@ -107,44 +135,72 @@ treatModalCommonPlot <- function(input, output, session) {
   
   observeEvent(input$MCP_color, {
     var <- unique(colnames(dfReportCommon))
+    var <- c("NULL",var)
     curAes <<- "color"
-    showModal(ModalRadioButtons(var, var, "okMCP", "selModal", "심볼 색 대화창", "color 변수 선정"))
+    choiceNames <- "NULL"
+    for(i in 2:length(var)) {
+      choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+    }
+    showModal(ModalRadioButtons(choiceNames, var, "okMCP", "selModal", "심볼 색 대화창", "color 변수 선정"))
   })
   
   observeEvent(input$MCP_size, {
     var <- selectVarWithGivenLevels(df=dfReportCommon, minNoLevels=1, maxNoLevels=7) 
+    var <- c("NULL",var)
     strExplain <- "수준이 2이상 6 이하인 변수만 선택됬습니다."
     curAes <<- "size"
-    showModal(ModalRadioButtons(var, var,"okMCP", "selModal", "심볼 사이즈", "사이즈 변수 선정",strExplain))
+    choiceNames <- "NULL"
+    for(i in 2:length(var)) {
+      choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+    }
+    showModal(ModalRadioButtons(choiceNames, var,"okMCP", "selModal", "심볼 사이즈", "사이즈 변수 선정",strExplain))
   })
   
   observeEvent(input$MCP_shape, {
     var <- selectVarWithGivenLevels(df=dfReportCommon, minNoLevels=1, maxNoLevels=7) 
+    var <- c("NULL",var)
     strExplain <- "수준이 2이상 6 이하인 변수만 선택됬습니다."
     curAes <<- "shape"
-    showModal(ModalRadioButtons(var, var,"okMCP", "selModal", "심볼 모양", "모양 변수 선정",strExplain))
+    choiceNames <- "NULL"  
+    for(i in 2:length(var)) {
+      choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+    }
+    showModal(ModalRadioButtons(choiceNames, var,"okMCP", "selModal", "심볼 모양", "모양 변수 선정",strExplain))
   })
   
   observeEvent(input$MCP_fill, {
     var <- selectVarWithGivenLevels(df=dfReportCommon, minNoLevels=1, maxNoLevels=7) 
+    var <- c("NULL",var)
     strExplain <- "수준이 2이상 7 이하인 변수만 선택됬습니다."
     curAes <<- "fill"
-    showModal(ModalRadioButtons(var, var,"okMCP", "selModal", "심볼 fill", "fill 변수 선정",strExplain))
+    choiceNames <- "NULL"
+    for(i in 2:length(var)) {
+      choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+    }
+    showModal(ModalRadioButtons(choiceNames, var,"okMCP", "selModal", "심볼 fill", "fill 변수 선정",strExplain))
   })
   
   observeEvent(input$MCP_tooltip, {
     var <- unique(colnames(dfReportCommon))
     var <- c("tooltip.DEFAULT", var)
     curAes <<- "tooltip"
+    choiceNames <- "tooltip.DEFAULT"
+    for(i in 2:length(var)) {
+      choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+    }
     strExplain <- "풍선 도움말에 표시될 내용이 들어있는 변수를 선정하세요"
-    showModal(ModalRadioButtons(var, var,"okMCP", "selModal", "tooltip 변수", "tooltip 변수 선정",strExplain))
+    showModal(ModalRadioButtons(choiceNames, var,"okMCP", "selModal", "tooltip 변수", "tooltip 변수 선정",strExplain))
   })
   
   observeEvent(input$MCP_data_id, {
     var <- unique(colnames(dfReportCommon))
     curAes <<- "data_id"
+    choiceNames <- attr(dfReportCommon[,var[1]],"labelShort")
+    for(i in 2:length(var)) {
+      choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
+    }    
     strExplain <- "data_id 변수를 선정하세요"
-    showModal(ModalRadioButtons(var, var,"okMCP", "selModal", "data_id", "data_id 변수 선정",strExplain))
+    showModal(ModalRadioButtons(choiceNames, var,"okMCP", "selModal", "data_id", "data_id 변수 선정",strExplain))
   })
   
   observeEvent(input$MCP_fitOption, {
@@ -160,9 +216,10 @@ treatModalCommonPlot <- function(input, output, session) {
     if(aesList[[curAes]]=="ALL.ALL" ) {
       aesList[[curAes]] <<- rownames(orderVFcluster(dfReportCommon))
     }
-    if(aesList[[curAes]]=="tooltip.DEFAULT" ) {
+    if(aesList[[curAes]]=="NULL" | aesList[[curAes]]=="tooltip.DEFAULT"   ) {
       aesList[[curAes]] <<- NULL
     }
+
     removeModal()
     switch(triggerMCP,
            # module = {
@@ -228,14 +285,14 @@ treatModalCommonPlot <- function(input, output, session) {
                paramsRmd <- list(df=dfReportCommon, aesList=aesList)
                outputFileFinalName <- paste0("탐색 그래프 리포트", fromReportCommon, "_",chosenDFSourceFile,
                                              fileNameSuffix, selVar,"-",aesList[["color"]], "-",aesList[["data_id"]], 
-                                             "-",aesList[["fitOption"]],".html")
+                                             "-",aesList[["fitOption"]],"-",dim(dfReportCommon)[[1]],".html")
              },
              ScatterOneY = {
                selVar <- aesList[["y"]] 
                paramsRmd <- list(df=dfReportCommon, aesList=aesList)
                outputFileFinalName <- paste0("탐색 그래프 리포트", fromReportCommon, "_",chosenDFSourceFile,
                                              fileNameSuffix, selVar,"-",aesList[["color"]], "-",aesList[["data_id"]], 
-                                             "-",aesList[["fitOption"]],".html")
+                                             "-",aesList[["fitOption"]],"-",dim(dfReportCommon)[[1]],".html")
              },
              ViolinOneY = {
                selVar <- paste0(aesList[["spare1"]],"-",aesList[["y"]]) 
@@ -251,14 +308,12 @@ treatModalCommonPlot <- function(input, output, session) {
            
                paramsRmd <- list(df=dfReportCommon, aesList=aesList, aesListScatter=aesListScatter)
                outputFileFinalName <- paste0("ViolinOneY 탐색 그래프 리포트", fromReportCommon, "_",chosenDFSourceFile,
-                                             fileNameSuffix, selVar,"-",aesList[["color"]], ".html")
+                                             fileNameSuffix, selVar,"-",aesList[["color"]],"-",dim(dfReportCommon)[[1]], ".html")
                
              },
              ViolinOneX = {
                selVar <- aesList[["x"]] 
-               # aesList[["color"]] <- "clusterLassoSel"
-               # aesList[["y"]] <<- rownames(orderVFcluster(dfReportCommon))
-               
+
                pValueVec <- vapply(aesList[["y"]], calcPValueOneXAov,dfReportCommon,aesList[["x"]], FUN.VALUE=numeric(1))
                pValueVec <- pValueVec[order(pValueVec)]
                aesList[["pValueVector"]] <<- pValueVec
@@ -269,7 +324,7 @@ treatModalCommonPlot <- function(input, output, session) {
 
                paramsRmd <- list(df=dfReportCommon, aesList=aesList, aesListScatter=aesListScatter)
                outputFileFinalName <- paste0("ViolinOneX 탐색 그래프 리포트", fromReportCommon, "_",chosenDFSourceFile,
-                                             fileNameSuffix, selVar,"-",aesList[["color"]], ".html")
+                                             fileNameSuffix, selVar,"-",aesList[["color"]],"-",dim(dfReportCommon)[[1]], ".html")
                
              },
              Histogram = {
@@ -277,7 +332,7 @@ treatModalCommonPlot <- function(input, output, session) {
                paramsRmd <- list(df=dfReportCommon, aesList=aesList)
                outputFileFinalName <- paste0("탐색 그래프 리포트", fromReportCommon, "_",chosenDFSourceFile,
                                              fileNameSuffix, selVar,"-",aesList[["color"]], "-",aesList[["data_id"]], 
-                                             "-",aesList[["fitOption"]],".html")
+                                             "-",aesList[["fitOption"]],"-",dim(dfReportCommon)[[1]],".html")
              },
              {}
              )

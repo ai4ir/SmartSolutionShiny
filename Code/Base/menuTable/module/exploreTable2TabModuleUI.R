@@ -92,21 +92,21 @@ exploreTable2TabModule <- function(input, output, session) {
 
 
 
-ModalTable <- function(okButtonName, labelStr="테이블 옵션 선정",
+ModalTable <- function(okButtonName, title="테이블 옵션 선정",
                        strExplain="테이블 옵션을 선정하세요",
                        failed = FALSE, session) {
-    labelStr <- "테이블 구성 옵션"
+
     # browser()
     df <- as.data.frame(curSampleExplore)
     ns <-session$ns
 
     modalDialog(
-        title=labelStr,
+        title=title,
         actionButton(ns("ModalTable_catVar1"), label="1열 그룹 변수 선정"),
         actionButton(ns("ModalTable_catVar2"), label="2열 그룹 변수 선정"),
         actionButton(ns("ModalTable_catVar3"), label="3열 그룹 변수 선정"),
         actionButton(ns("ModalTable_contVar"), label="연속형 변수 선정"),
-        tags$p(""),
+        tags$p(strExplain),
         tags$hr(),
         # tags$p(paste0(" Y : ", str_c(aesList[["y"]], collapse=", "))),
         # tags$p(paste0(" X : ", str_c(aesList[["x"]], collapse=", "))),
@@ -134,16 +134,25 @@ treatModalTable <- function(input, output, session) {
 
     observeEvent(input$updateTable, {
         catVar <- extractCatVarName(curSampleExplore)
-        showModal(ModalTable(okButtonName=ns("okModalTable"), labelStr="테이블 옵션 선정",
+        showModal(ModalTable(okButtonName=ns("okModalTable"), title="테이블 옵션 선정",
                              strExplain="테이블 옵션을 선정하세요",
                              failed = FALSE, session))
     })
     
     observeEvent(input$ModalTable_catVar1  , {
-        var <- c(catVarWithoutModal, catVarWithModal, DomainTable1Names, DomainTable2Names, DomainTable3Names)
-        showModal(ModalRadioButtons(choiceNames=var, choiceValues=var,
+        # var <- c(catVarWithoutModal, catVarWithModal, DomainTable1Names, DomainTable2Names, DomainTable3Names)
+        var <- extractCatVarName(curSampleExploreTable)
+        varFewLevels <- selectVarWithGivenLevels(df=curSampleExploreTable, minNoLevels=2, maxNoLevels=10) 
+        varFewLevels <- setdiff(varFewLevels,var)
+        var <- c(var, varFewLevels)
+        
+        choiceNames <- attr(curSampleExploreTable[,var[1]],"labelShort")
+        for(i in 2:length(var)) {
+            choiceNames <- c(choiceNames, attr(curSampleExploreTable[,var[i]],"labelShort") )
+        }
+        showModal(ModalRadioButtons(choiceNames=choiceNames, choiceValues=var,
                                     okButtonName=ns("okModalTable_catVar1"), 
-                                    labelStr="1열 그룹 변수선정", 
+                                    label="1열 그룹 변수선정", 
                                     strExplain="1열 그룹 변수를선정하세요",
                                     modalRadioButtonsID=ns("selModalTable_catVar1"),failed = FALSE)
         )
@@ -152,17 +161,22 @@ treatModalTable <- function(input, output, session) {
     observeEvent(input$okModalTable_catVar1, {
         exploreTable2TabModuleList[["tableCol1"]] <<- input$selModalTable_catVar1
         removeModal()
-        showModal(ModalTable(okButtonName=ns("okModalTable"), labelStr="테이블 옵션 선정",
+        showModal(ModalTable(okButtonName=ns("okModalTable"), title="테이블 옵션 선정",
                              strExplain="테이블 옵션을 선정하세요",
                              failed = FALSE, session))
     })
     
     observeEvent(input$ModalTable_catVar2  , {
-        var <- c(catVarWithoutModal, catVarWithModal, DomainTable1Names, DomainTable2Names, DomainTable3Names)
+        # var <- c(catVarWithoutModal, catVarWithModal, DomainTable1Names, DomainTable2Names, DomainTable3Names)
+        var <- extractCatVarName(curSampleExploreTable)
         var <- setdiff(var,exploreTable2TabModuleList[["tableCol1"]] )
-        showModal(ModalRadioButtons(choiceNames=var, choiceValues=var,
+        choiceNames <- attr(curSampleExploreTable[,var[1]],"labelShort")
+        for(i in 2:length(var)) {
+            choiceNames <- c(choiceNames, attr(curSampleExploreTable[,var[i]],"labelShort") )
+        }
+        showModal(ModalRadioButtons(choiceNames=choiceNames, choiceValues=var,
                                     okButtonName=ns("okModalTable_catVar2"), 
-                                    labelStr="2열 그룹 변수선정", 
+                                    label="2열 그룹 변수선정", 
                                     strExplain="2열 그룹 변수를선정하세요",
                                     modalRadioButtonsID=ns("selModalTable_catVar2"),failed = FALSE)
         )
@@ -171,13 +185,14 @@ treatModalTable <- function(input, output, session) {
     observeEvent(input$okModalTable_catVar2, {
         exploreTable2TabModuleList[["tableCol2"]] <<- input$selModalTable_catVar2
         removeModal()
-        showModal(ModalTable(okButtonName=ns("okModalTable"), labelStr="테이블 옵션 선정",
+        showModal(ModalTable(okButtonName=ns("okModalTable"), title="테이블 옵션 선정",
                              strExplain="테이블 옵션을 선정하세요",
                              failed = FALSE, session))
     })
     
     observeEvent(input$ModalTable_catVar3  , {
-        var <- c(catVarWithoutModal, catVarWithModal, DomainTable1Names, DomainTable2Names, DomainTable3Names)
+        # var <- c(catVarWithoutModal, catVarWithModal, DomainTable1Names, DomainTable2Names, DomainTable3Names)
+        var <- extractCatVarName(curSampleExploreTable)
         var <- setdiff(var,
                           c(exploreTable2TabModuleList[["tableCol1"]],
                             exploreTable2TabModuleList[["tableCol2"]]))
@@ -185,10 +200,14 @@ treatModalTable <- function(input, output, session) {
             alert("그룹 변수가 2개 이하입니다.")
             return()
         }
+        choiceNames <- attr(curSampleExploreTable[,var[1]],"labelShort")
+        for(i in 2:length(var)) {
+            choiceNames <- c(choiceNames, attr(curSampleExploreTable[,var[i]],"labelShort") )
+        }
         
-        showModal(ModalRadioButtons(choiceNames=var, choiceValues=var,
+        showModal(ModalRadioButtons(choiceNames=choiceNames, choiceValues=var,
                                     okButtonName=ns("okModalTable_catVar3"), 
-                                    labelStr="3열 그룹 변수선정", 
+                                    label="3열 그룹 변수선정", 
                                     strExplain="3열 그룹 변수를선정하세요",
                                     modalRadioButtonsID=ns("selModalTable_catVar3"),failed = FALSE)
         )
@@ -197,24 +216,24 @@ treatModalTable <- function(input, output, session) {
     observeEvent(input$okModalTable_catVar3, {
         exploreTable2TabModuleList[["tableCol3"]] <<- input$selModalTable_catVar3
         removeModal()
-        showModal(ModalTable(okButtonName=ns("okModalTable"), labelStr="테이블 옵션 선정",
+        showModal(ModalTable(okButtonName=ns("okModalTable"), title="테이블 옵션 선정",
                              strExplain="테이블 옵션을 선정하세요",
                              failed = FALSE, session))
     })
     
     observeEvent(input$ModalTable_contVar  , {
-        contVar <- c(DomainTable1Names, DomainTable2Names, DomainTable3Names)
-        # showModal(ModalRadioButtons(choiceNames=contVar, choiceValues=contVar,
-        #                             okButtonName=ns("okModalTable_contVar"), 
-        #                             labelStr="연속형 변수선정", 
-        #                             strExplain="연속형 변수를선정하세요",
-        #                             modalRadioButtonsID=ns("selModalTable_contVar"),failed = FALSE)
-        # )
+        # contVar <- c(DomainTable1Names, DomainTable2Names, DomainTable3Names)
+        contVar <- extractNumVarName(curSampleExploreTable)
+        choiceNames <- attr(curSampleExploreTable[,contVar[1]],"labelShort")
+        for(i in 2:length(contVar)) {
+            choiceNames <- c(choiceNames, attr(curSampleExploreTable[,contVar[i]],"labelShort") )
+        }
+
                   
         showModal(ModalCheckboxGroup(title="연속형 변수선정", 
                                      modalCheckboxID=ns("selModalTable_contVar"),
                                      label="연속형 변수선정",
-                                     choiceNames=contVar, choiceValues=contVar, 
+                                     choiceNames=choiceNames, choiceValues=contVar, 
                                      selected=DomainTable3Names,
                                     modalOKButtonID=ns("okModalTable_contVar"), failed = FALSE) 
         )
@@ -223,7 +242,7 @@ treatModalTable <- function(input, output, session) {
     observeEvent(input$okModalTable_contVar, {
         exploreTable2TabModuleList[["tableContVar"]] <<- input$selModalTable_contVar
         removeModal()
-        showModal(ModalTable(okButtonName=ns("okModalTable"), labelStr="테이블 옵션 선정",
+        showModal(ModalTable(okButtonName=ns("okModalTable"), title="연속형 변수 선정",
                              strExplain="테이블 옵션을 선정하세요",
                              failed = FALSE, session))
     })
@@ -279,6 +298,8 @@ treatModalTable <- function(input, output, session) {
                 exprCode <- parse(text=stringCode)
                 eval(exprCode)
                 zzz <- as.data.frame(ppp)
+                
+
                 
                 qqq$noData <- as.character(round(qqq$noData,0))
                 qqq$mean <- as.character(round(qqq$mean,attr(zzz[,contVar[1]], "digit")))

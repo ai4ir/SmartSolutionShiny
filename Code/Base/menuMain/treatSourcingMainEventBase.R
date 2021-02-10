@@ -70,6 +70,15 @@ treatSourcingMainEventBase <- function(input, output, session) {
     treatModalCommonPlot(input, output, session)
   })
   
+  observeEvent(input$renderReportCommonContingency, {
+    pathFileRmdCommonContingency <<- "Base/common/Rmd/commonContingencyReport.Rmd"
+    showModal(ModalCommonContingency())
+  })
+  
+  observe({
+    treatModalCommonContingency(input, output, session)
+  })
+  
   observeEvent(input$renderReportCommonDescriptive, {
     pathFileRmdCommonDescriptive <<- "Base/common/Rmd/commonDescriptiveReport.Rmd"
     showModal(ModalCommonDescriptive())

@@ -35,7 +35,9 @@ scatter1TabModuleUI <- function(Id) {
             ),
             column(1, actionButton(ns("MCP_shape"), label="shape 변수 선정") 
             ),
-            column(2 
+            column(1, numericInput(ns("MCP_pointSize"), label="심볼 사이즈 변경", value=3, min=1, max=6, step=1) 
+            ),
+            column(1, numericInput(ns("MCP_positionJitter"), label="jitter 변경", value=0, min=0, max=0.1, step=0.01) 
             ),
             column(2, actionButton(ns("modalGraphOption"), label="그래프 옵션 선정") 
             ),
@@ -106,7 +108,11 @@ scatter1TabModule <- function(input, output, session) {
 
         choiceNames <- "NULL"
         for(i in 2:length(var)) {
-            choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
+            if(is.null(attr(curSampleExplore[,var[i]],"labelShort") )) {
+                choiceNames <- c(choiceNames,paste0("임시 라벨 ", i))
+            } else {
+                choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
+            }
         }
         curAes <<- "color"
         showModal(ModalRadioButtons(choiceNames=choiceNames, var, ns("okNext"), "color 변수",
@@ -225,28 +231,31 @@ scatter1TabModule <- function(input, output, session) {
         
         
         output$scatter1 <- renderPlot({
-            if(dim(dfGraph)[[1]]<20) {
-                aesList[["pointSize"]][1] <<- 6
-            } else if(dim(dfGraph)[[1]]<100) {
-                aesList[["pointSize"]][1] <<- 5
-            } else if(dim(dfGraph)[[1]]<1000) {
-                aesList[["pointSize"]][1] <<- 4
-            } else if(dim(dfGraph)[[1]]<10000) {
-                aesList[["pointSize"]][1] <<- 3
-            } else if(dim(dfGraph)[[1]]<100000) {
-                aesList[["pointSize"]][1] <<- 2
-            }  else { 
-                aesList[["pointSize"]][1] <<- 1
-            } 
-            
+            # if(dim(dfGraph)[[1]]<20) {
+            #     aesList[["pointSize"]][1] <<- 6
+            # } else if(dim(dfGraph)[[1]]<100) {
+            #     aesList[["pointSize"]][1] <<- 5
+            # } else if(dim(dfGraph)[[1]]<1000) {
+            #     aesList[["pointSize"]][1] <<- 4
+            # } else if(dim(dfGraph)[[1]]<10000) {
+            #     aesList[["pointSize"]][1] <<- 3
+            # } else if(dim(dfGraph)[[1]]<100000) {
+            #     aesList[["pointSize"]][1] <<- 2
+            # }  else { 
+            #     aesList[["pointSize"]][1] <<- 1
+            # } 
+            aesList[["pointSize"]][1] <- isolate(input$MCP_pointSize)
+            positionJitter <- isolate(input$MCP_positionJitter)
             ggObj <- ggplot(data=dfGraph,
                             aes_string(x=x, y=y,
                                        color=aesList[["color"]][1],
                                        shape=aesList[["shape"]][1])) 
             if(is.null(aesList[["size"]][1])) {
-                ggObj <- ggObj + geom_point( aes_string( color=aesList[["color"]][1]), size= aesList[["pointSize"]][1]) 
+                ggObj <- ggObj + geom_point( aes_string( color=aesList[["color"]][1]), size= aesList[["pointSize"]][1],
+                                             position=position_jitter(width=positionJitter, height=positionJitter)) 
             } else {
-                ggObj <- ggObj + geom_point( aes_string(size=aesList[["size"]][1], color=aesList[["color"]][1])) 
+                ggObj <- ggObj + geom_point( aes_string(size=aesList[["size"]][1], color=aesList[["color"]][1]),
+                                             position=position_jitter(width=positionJitter, height=positionJitter))  
             }
             
             if(!is.Date(dfGraph[,x]) & !is.Date(dfGraph[,y]) & !is.POSIXct(dfGraph[,x]) & !is.POSIXct(dfGraph[,y])) {

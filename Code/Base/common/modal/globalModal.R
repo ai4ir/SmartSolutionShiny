@@ -1,4 +1,13 @@
 
+# numVar <- extractNumVarName(curSampleExplore)
+# numVar <- c("ALL.ALL",numVar)
+# choiceNames <- "All.ALL"
+# for(i in 2:length(numVar)) {
+#   choiceNames <- c(choiceNames, attr(dfReportCommon[,numVar[i]],"labelShort") )
+# }
+# strExplain <- "nuneric 변수만 제공됬습니다."
+# showModal(ModalCheckboxGroup(choiceNames, numVar, "okMCP", "selModal", "y 선정 대화창", label="y 선정", strExplain, selected="ALL.ALL"))
+
 ModalCheckboxGroup <- function(choiceNames, choiceValues, modalOKButtonID="okMCP", modalCheckboxID="selModal",  
                                title="대화창", label="label", 
                                strExplain="향후 설명이 추가될 예정입니다.",
@@ -119,6 +128,7 @@ ModalActionButtonsReportCommon <- function(failed = FALSE) {
       actionButton("renderReportCommonPlotViolinOneY", "ViolinOneY"),
       actionButton("renderReportCommonPlotViolinOneX", "ViolinOneX"),
       actionButton("renderReportCommonPlotHistogram", "Histogram"),
+      actionButton("renderReportCommonContingency", "교차표 분석"),
       actionButton("renderReportCommonDescriptive", "기술통계")
     ),
     size="l"

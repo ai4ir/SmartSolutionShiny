@@ -1,3 +1,25 @@
+/* 주석 달기 */
+/*
+.radio
+{
+float: left;
+margin: 10px;
+}
+*/
+
+#cTree-selCTreeVarModal, #cTree-selCTreeTargetVarModal {
+width: 1200px;
+}
+
+div[id="scatter1-selModal"] .radio,
+div[id="cTree-selCTreeVarModal"] .checkbox,
+div[id="cTree-selCTreeTargetVarModal"] .radio
+{
+float: left;
+margin: 10px;
+}
+
+
 #ModalRadioButtons {
 width: 1200px;
 }
@@ -61,10 +83,7 @@ margin: 10px;
 width: 1200px;
 }
 
-#scatter1-selModal  .radio {
-float: left;
-margin: 10px;
-}
+
 
 #boxplot1-selModal {
 width: 1200px;
@@ -113,6 +132,44 @@ float: left;
 margin: 10px;
 }
 
+
+
+#exploreTable2-selModalTable_catVar1 {
+width: 1200px;
+}
+#exploreTable2-selModalTable_catVar1 .radio
+{float: left;
+margin: 10px;
+}
+
+#exploreTable2-selModalTable_catVar1 .checkbox
+{float: left;
+margin: 10px;
+}
+
+#exploreTable2-selModalTable_catVar2 {
+width: 1200px;
+}
+#exploreTable2-selModalTable_catVar2  .radio {
+float: left;
+margin: 10px;
+}
+
+#exploreTable2-selModalTable_catVar3 {
+width: 1200px;
+}
+#exploreTable2-selModalTable_catVar3  .radio {
+float: left;
+margin: 10px;
+}
+
+#exploreTable2-selModalTable_contVar {
+width: 1200px;
+}
+#exploreTable2-selModalTable_contVar  .checkbox {
+float: left;
+margin: 10px;
+}
 
 #selModelResultReport {
 width: 1200px;

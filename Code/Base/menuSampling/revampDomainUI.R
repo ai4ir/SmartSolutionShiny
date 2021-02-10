@@ -110,6 +110,14 @@ renderDomainUI_2 <- function() {
                       checkboxGroupInput("selCatExploreFewLevels10", label="selCatFewLevels2",
                                          choiceNames = list("init3", "init4"), 
                                          choiceValues = list("init3", "init4"),
+                                         selected="ALL"),
+                      checkboxGroupInput("selCatExploreFewLevels11", label="selCatFewLevels2",
+                                         choiceNames = list("init3", "init4"), 
+                                         choiceValues = list("init3", "init4"),
+                                         selected="ALL"),
+                      checkboxGroupInput("selCatExploreFewLevels12", label="selCatFewLevels2",
+                                         choiceNames = list("init3", "init4"), 
+                                         choiceValues = list("init3", "init4"),
                                          selected="ALL")
                       
                ),
@@ -155,11 +163,11 @@ revampDomainUI_2 <- function(input,output, session) {
   
   for(i in seqNumber) {
     inVarName <- paste0("selCatExplore",i) # 변수명
-    html(inVarName, catVarWithModal[i] )
+    html(inVarName, attr(curSampleExplore[,catVarWithModal[i]],"labelShort") )
     show(inVarName)
   }
   
-  for(i in 1:10) {
+  for(i in 1:12) {
     inVarName <- paste0("selCatExploreFewLevels",i) # 변수명
     hide(inVarName)
   }
@@ -173,7 +181,7 @@ revampDomainUI_2 <- function(input,output, session) {
     # html(inVarName, catVarWithModal[i] )
     # browser()
     updateCheckboxGroupInput(session, inVarName,
-                             label = catVarWithoutModal[i],
+                             label = attr(curSampleExplore[,catVarWithoutModal[i]],"labelShort"),
                              choices = itemList,
                              selected = itemList
     )
@@ -297,7 +305,7 @@ updateCatVarSample <- function(input, output, session) {
     
 
     showModal(ModalCheckboxGroup(title=curSelCatVar, modalCheckboxID="ModalSelCatVarExplore", label="범주 선정", 
-                                         choiceNames=choiceNames, choiceValues=choiceValues,selected="ALL", 
+                                         choiceNames=choiceNames, choiceValues=choiceValues,selected=NULL, 
                                          modalOKButtonID="okModalSelCatVarExplore"))
   }
   
