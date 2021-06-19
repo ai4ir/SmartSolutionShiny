@@ -5,7 +5,7 @@ options(warn=-1)  # 끄기
 # getOption("warn")
 source("Base/global.R", encoding="UTF-8")
 
-ui <- navbarPage( "Smart-Report", id="SmartReportMain", 
+ui <- navbarPage( "SmartSolutionShiny", id="SmartReportMain", 
                   theme=shinytheme("cerulean"), # United
                   useShinyjs(),  # Set up shinyjs
                   selected="Sourcing",
