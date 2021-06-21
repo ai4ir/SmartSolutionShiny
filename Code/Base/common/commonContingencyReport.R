@@ -51,7 +51,7 @@ treatModalCommonContingency <- function(input, output, session) {
       choiceNames <- c(choiceNames, attr(dfReportCommon[,var[i]],"labelShort") )
     }
     strExplain <- "수준이 2이상 10 이하인 변수만 선택됬습니다."
-    showModal(ModalCheckboxGroup(choiceNames, var, "okContingency", "selModal", "y 선정 대화창", label="y 선정", strExplain, selected="ALL.ALL"))
+    showModal(ModalCheckboxGroup(choiceNames, var, "okContingency", "selModal", "x 선정 대화창", label="x 선정", strExplain, selected="ALL.ALL"))
   })
 
   observeEvent(input$okContingency, {
@@ -68,8 +68,7 @@ treatModalCommonContingency <- function(input, output, session) {
       pValueVec <- pValueVec[order(pValueVec)]
       contingencyList[["pValueVector"]] <<- pValueVec
       contingencyList[["x"]] <<- names(pValueVec)
-      
-      
+
       outputFiles <- ""
       params <- list(df=dfReportCommon, contingencyList=contingencyList )
       outputFileName <- paste0("commonContingencyReport", fromReportCommon, "_","general", ".html")

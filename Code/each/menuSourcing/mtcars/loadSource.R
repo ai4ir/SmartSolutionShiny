@@ -68,6 +68,7 @@ loadSource <- function() {
   }
 
   selCatDomainExplore <<- dfDomainCatExplore
+  selCatDomainExploreInit <<- dfDomainCatExplore
   
   ############## Modeling 관련 고유 정보 ################  
   ############## Modeling 관련 고유 정보 ################  

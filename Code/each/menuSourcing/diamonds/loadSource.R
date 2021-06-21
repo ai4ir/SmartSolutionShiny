@@ -10,6 +10,7 @@ loadSource <- function() {
   chosenDFSourceFile <<- "diamonds"
   
 
+
   ############## 전체 관련 고유 정보 ################
   pathHTMLReport <<- "../USER/diamonds/output"
   
@@ -63,6 +64,7 @@ loadSource <- function() {
   }
 
   selCatDomainExplore <<- dfDomainCatExplore
+  selCatDomainExploreInit <<- dfDomainCatExplore
 
 }
 

@@ -40,7 +40,7 @@ renderReportCheckboxGroup <- function(input, output, session, params, outputFile
   removeModal() 
   selReport <- input$ModalCheckboxGroup
   print(paste0("sel report of ModalCheckboxGroup : ", selReport))
-  
+
   withProgress(message="리포트 작성중", value=0, {
     incProgress(0.1)
     outputFiles <- ""
@@ -129,6 +129,7 @@ ModalActionButtonsReportCommon <- function(failed = FALSE) {
       actionButton("renderReportCommonPlotViolinOneX", "ViolinOneX"),
       actionButton("renderReportCommonPlotHistogram", "Histogram"),
       actionButton("renderReportCommonContingency", "교차표 분석"),
+      actionButton("renderReportCommonCollectDiag", "수집진단"),
       actionButton("renderReportCommonDescriptive", "기술통계")
     ),
     size="l"

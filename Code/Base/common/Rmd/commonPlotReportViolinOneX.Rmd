@@ -1,6 +1,6 @@
 ---
-title: "Violin with Lasso Selection"
-author: "C.S.Lee(ai4ir@daum.net, 010-5508-7437)"
+title: "ViolinOneX with Cluster"
+author: "뿌리 융합솔루션팀(010-5508-7437)"
 output:
     flexdashboard::flex_dashboard:
         orientation: rows
@@ -37,6 +37,12 @@ if(!library(cowplot, logical.return=TRUE)) {
 df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
 aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
 aesListScatter <- params$aesListScatter ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+if(dim(df)[1]>10000) {
+  rndNo <- sample(1:dim(df)[1], 10000, replace=FALSE)
+  df <- df[rndNo,]
+}
+
 pValueVector <- aesList[["pValueVector"]] 
 orderedVF <- as.data.frame(pValueVector)
 orderedNames <- rownames(orderedVF)

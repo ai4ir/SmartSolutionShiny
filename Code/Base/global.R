@@ -101,10 +101,7 @@ if(!library(ggiraph, logical.return=TRUE)) {
 #     library(gridExtra)
 # }
 # 
-if(!library(party, logical.return=TRUE)) {
-    install.packages("party")
-    library(party)
-}
+
 
 # if(!library(jsonlite, logical.return=TRUE)) {
 #     install.packages("jsonlite")
@@ -189,6 +186,7 @@ if(!require(DT)) install.packages("DT")
 ######################## global area  ##############################
 Sys.setlocale( "LC_ALL", "Korean_Korea.949")
 # Sys.setlocale( "LC_ALL", "C")
+
 source("Base/common/modal/globalModal.R", encoding="UTF-8")
 source("Base/common/globalFunc.R", encoding="UTF-8")
 source("Base/common/treatStat.R", encoding="UTF-8")
@@ -203,6 +201,7 @@ source("Base/menuExplore/modal/ModalGraphOptionGeomLine.R", encoding="UTF-8")
 source("Base/menuExplore/modal/ModalGraphOptionBoxplot.R", encoding="UTF-8")
 source("Base/menuExplore/modal/ModalGraphOptionBar.R", encoding="UTF-8")
 source("Base/menuExplore/modal/ModalGraphOptionHistogram.R", encoding="UTF-8")
+source("Base/menuExplore/modal/ModalGraphOptionDensity.R", encoding="UTF-8")
 dfReportCommon <- NULL
 fromReportCommon <- NULL
 curSelModelResultReport <- NULL
@@ -217,12 +216,11 @@ digitList[["predict"]][["predictTab1"]] <- list(pred=NA)
 digitList[["predict"]][["predictTab1"]][["pred"]] <- 0
 
 ######################## tidying Tab  ##############################
-source("each/menuMain/tidyingMain.R", encoding="UTF-8")
 source("Base/menuTidying/funcTidy.R", encoding="UTF-8")
+source("Base/menuMain/treatTidyingMainEventBase.R", encoding="UTF-8")
 
 
 ######################## sourcing Tab  ##############################
-source("each/menuMain/sourcingMain.R", encoding="UTF-8")
 reactDFSource <- reactiveVal(NA)
 reactDFSource(NA)
 # renderReportSourcing <- function(input, output, session) {
@@ -258,6 +256,9 @@ source("Base/menuSampling/module/scatterGirafe1TabModuleUI.R", encoding="UTF-8")
 # ######################## Explore Tab #################################
 # ######################## Explore Tab #################################
 # ######################## Explore Tab #################################
+aesList <- list(x=NA, y=NA, color=NULL, size=NULL, shape=NULL, fill=NULL, grid=NULL, tooltip=NULL, data_id="rowNoSource", 
+                axisTitleSize=40, axisTextSize=30, pointSize=3, colorLegendPointSize=8, 
+                legendTitleSize=40, legendTextSize=25, fitOption="NoFit", clusterMethod=NA, spare1=NULL, pValueVector=NA)
 source("Base/menuMain/exploreMain.R", encoding="UTF-8")
 # source("function/ExploreRelatedFunc.R", encoding="UTF-8")
 # source("function/ExploreRelatedModal.R", encoding="UTF-8")
@@ -268,13 +269,12 @@ source("Base/menuExplore/module/boxplot1TabModuleUI.R", encoding="UTF-8")
 source("Base/menuExplore/module/boxplot2TabModuleUI.R", encoding="UTF-8")
 source("Base/menuExplore/module/boxplot3TabModuleUI.R", encoding="UTF-8")
 source("Base/menuExplore/module/violin1TabModuleUI.R", encoding="UTF-8")
-source("Base/menuExplore/module/bar1TabModuleUI.R", encoding="UTF-8")
+source("Base/menuExplore/module/barCountTabModuleUI.R", encoding="UTF-8")
 source("Base/menuExplore/module/histogram1TabModuleUI.R", encoding="UTF-8")
+source("Base/menuExplore/module/density1TabModuleUI.R", encoding="UTF-8")
 source("Base/menuExplore/module/scatter2TabModuleUI.R", encoding="UTF-8")
 clustersK <- NULL
-source("Base/menuExplore/module/clusteringTabModuleUI.R", encoding="UTF-8")
 source("Base/common/module/baseTabModule.R", encoding="UTF-8")
-source("Base/menuExplore/module/cTreeTabModuleUI.R", encoding="UTF-8")
 
 reactCurSampleClustering <- reactiveVal(NA)
 
@@ -315,13 +315,44 @@ source("Base/menuTable/module/exploreTable1TabModuleUI.R", encoding="UTF-8")
 source("Base/menuTable/module/exploreTable2TabModuleUI.R", encoding="UTF-8")
 curSampleExploreTable <- NA
 
+######################### MachineLearning Tab #################################
+######################### MachineLearning Tab #################################
+######################### MachineLearning Tab #################################
+source("Base/menuMain/machinelearningMain.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/clusteringTabModuleUI.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/cTreeTabModuleUI.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/rangerTabModuleUI.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/randomForestTabModuleUI.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/logisticRegTabModuleUI.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/linearRegTabModuleUI.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/cTreeTotalTabModuleUI.R", encoding="UTF-8")
+source("Base/menuMachineLearning/module/prCompTabModuleUI.R", encoding="UTF-8")
 
 
 # ######################## New Modeling Tab ###########################
-source("each/menuMain/modelingMain.R", encoding="UTF-8")
+if(!library(caret, logical.return=TRUE)) {
+    install.packages("caret")
+    library(caret)
+}
+if(!library(car, logical.return=TRUE)) {
+    install.packages("car")
+    library(car)
+}
+if(!library(lm.beta, logical.return=TRUE)) {
+    install.packages("lm.beta")
+    library(lm.beta)
+}
+if(!library(corrplot, logical.return=TRUE)) {
+    install.packages("corrplot")
+    library(corrplot)
+}
 source("Base/menuModeling/modal/modelingModal.R", encoding="UTF-8")
 source("Base/menuModeling/module/predMeas1TabModuleUI.R", encoding="UTF-8")
 source("Base/menuModeling/module/modYVF1TabModuleUI.R", encoding="UTF-8")
+
+
+curSelModel <- NULL
+curSelModelY <- NULL
 # source("function/NewModelRelatedModal.R", encoding="UTF-8")
 # source("function/modelingTab.R", encoding="UTF-8")
 # source("function/predMeasTab.R", encoding="UTF-8")
@@ -470,3 +501,14 @@ reactPredValOpt <- reactiveVal(NA)
 # })
 # 
 
+
+########################### globalOptionSS Tab #############################
+source("Base/menuMain/globalOptionSSMain.R", encoding="UTF-8")
+
+########################### globalEach.R #############################
+
+source("each/globalEach.R", encoding="UTF-8")
+
+########################### globalTask.R #############################
+
+source("task/globalTask.R", encoding="UTF-8")

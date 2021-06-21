@@ -50,53 +50,24 @@
 }
 
 */
-#DomainTable1 table {
+#DomainTable1 table, #DomainTable2 table, #DomainTable3 table {
     float: left;
-    width: 230px; 
-    margin: 10px;
+    width: 300px; 
+    margin: 50px;
 }
 
-#DomainTable1 .col1 {
-    width : 30px; 
-}
-#DomainTable1 .col2 {
+#DomainTable1 .col1, #DomainTable2 .col1, #DomainTable3 .col1 {
     width : 100px; 
 }
-#DomainTable1 .col3 {
+#DomainTable1 .col2, #DomainTable2 .col2, #DomainTable3 .col2 {
     width : 100px; 
 }
-
-#DomainTable2 table {
-    float: left;
-    width: 230px; 
-    margin: 10px ;
-}
-
-#DomainTable2 .col1 {
-    width : 30px; 
-}
-#DomainTable2 .col2 {
-    width : 100px; 
-}
-#DomainTable2 .col3 {
+#DomainTable1 .col3, #DomainTable2 .col3, #DomainTable3 .col3 {
     width : 100px; 
 }
 
-#DomainTable3 table {
-    float: left;
-    width: 230px; 
-    margin: 10px ;
-}
 
-#DomainTable3 .col1 {
-    width : 30px; 
-}
-#DomainTable3 .col2 {
-    width : 100px; 
-}
-#DomainTable3 .col3 {
-    width : 100px; 
-}
+
 
 /*
 

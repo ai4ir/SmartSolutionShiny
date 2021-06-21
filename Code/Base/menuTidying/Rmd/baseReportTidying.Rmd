@@ -1,0 +1,162 @@
+---
+title: "전처리 보고서"
+author: "뿌리산업 융합 솔루션팀"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    tidyingList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+# Sys.setlocale( "LC_ALL", "C")
+knitr::opts_chunk$set(echo=FALSE)
+options(warn=-1)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+if(!library(ggiraph, logical.return=TRUE)) {
+    install.packages("ggiraph")
+    library(ggiraph)
+}
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+
+### 내부 디버깅 ###
+# df <- dfAll
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+tidyingList <- params$tidyingList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=10))
+theme_update(axis.text=element_text(size=8))
+# theme_update(legend.text = element_text(size=8))
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+extractCatVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  catVar <- varNameVec[!booleanVec]
+  return(catVar)
+}
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+
+Table  
+ - [sumTable1] page  
+ - [catVar2] page   
+ - [catVar3] page  
+ - [catVar4] page  
+ - [catVar5] page  
+
+
+Structure  
+ - [structure1] page  
+
+
+ 
+   
+
+
+
+sumTable1 {data-navmenu="Table"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, sumTable1_1}
+varName <- colnames(df) 
+dfTable <- data.frame(varName=varName)
+label <- rep(NA,dim(df)[2])
+labelShort <- rep(NA,dim(df)[2])
+validMin <- rep(NA,dim(df)[2])
+validMax <- rep(NA,dim(df)[2])
+min <- rep(NA,dim(df)[2])
+max <- rep(NA,dim(df)[2])
+mean <- rep(NA,dim(df)[2])
+digit <- rep(NA,dim(df)[2])
+# unit <- rep(NA,dim(df)[2])
+
+category <- rep(NA,dim(df)[2])
+
+for( i in seq(length(label))) {
+  label[i] <- attr(df[,i],"label")
+  labelShort[i] <- attr(df[,i],"labelShort")
+  # validMin[i] <- attr(df[,i],"validMin")
+  # validMax[i] <- attr(df[,i],"validMax")
+  # min[i] <- attr(df[,i],"min")
+  # max[i] <- attr(df[,i],"max")
+  # mean[i] <- attr(df[,i],"mean")
+  # digit[i] <- attr(df[,i],"digit")
+  if(varName[i] %in% tidyingList[["removedVar"]]) {
+    category[i] <- "제거"
+  } else if(varName[i] %in% tidyingList[["remainedVar"]]) {
+    category[i] <- "잔류"
+  } else if(varName[i] %in% tidyingList[["addedVar"]]) {
+    category[i] <- "추가"
+  } else if(varName[i] %in% tidyingList[["removedVarNA"]]) {
+    category[i] <- "제거NA"
+  }
+
+}
+
+dfTable <- dfTable %>% mutate(lable=label, labelShort=labelShort, category=category)
+DT::datatable(dfTable)
+
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+structure1{data-navmenu="Structure"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+```{r, contVarTable2}
+str(df)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`

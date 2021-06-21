@@ -30,11 +30,11 @@ revampDomainUI <- function(input,output, session) {
       var <- DomainTableLabel[i]
       inVarName <- paste0("DomainTable", tableNo,"Name", i) # 변수명
       html(id=inVarName, html=var)
-      show(inVarName)
+      shinyjs::show(inVarName)
       inVar <- paste0("minDomTable", tableNo, "Cell",i)   # HTML ID
-      show(inVar)
+      shinyjs::show(inVar)
       inVar <- paste0("maxDomTable", tableNo, "Cell",i)   # HTML ID
-      show(inVar)
+      shinyjs::show(inVar)
     }
     
     
@@ -79,7 +79,7 @@ renderDomainUI_2 <- function() {
                                          choiceNames = list("init3", "init4"), 
                                          choiceValues = list("init3", "init4"),
                                          selected="ALL"),
-                      checkboxGroupInput("selCatExploreFewLevels3", label="selCatFewLevels2",
+                      checkboxGroupInput("selCatExploreFewLevels3", label="selCatFewLevels3",
                                          choiceNames = list("init3", "init4"), 
                                          choiceValues = list("init3", "init4"),
                                          selected="ALL"),
@@ -164,7 +164,7 @@ revampDomainUI_2 <- function(input,output, session) {
   for(i in seqNumber) {
     inVarName <- paste0("selCatExplore",i) # 변수명
     html(inVarName, attr(curSampleExplore[,catVarWithModal[i]],"labelShort") )
-    show(inVarName)
+    shinyjs::show(inVarName)
   }
   
   for(i in 1:12) {
@@ -185,7 +185,7 @@ revampDomainUI_2 <- function(input,output, session) {
                              choices = itemList,
                              selected = itemList
     )
-    show(inVarName)
+    shinyjs::show(inVarName)
   }
   
 }

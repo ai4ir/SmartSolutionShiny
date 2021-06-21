@@ -115,11 +115,20 @@ boxplot3TabModule <- function(input, output, session) {
         reactAesList(aesList)
         theme_update(axis.title=element_text(size=graphOption[["axisTitleSize"]][1]))
         theme_update(axis.text=element_text(size=graphOption[["axisTextSize"]][1]))
-        dfGraph <- curSampleExplore
+
         x <- aesList[["x"]][1]
         y <- aesList[["y"]][1]
         color <- aesList[["color"]][1]
+        varName <- unique(c(x,y,color))
+        dfGraph <- curSampleExplore[,varName]  
+        if(globalOptionSS[["graphDataValid"]]=="valid") {
+            dfGraph <- validateDF(dfGraph, varName)
+        }
+        
         dfGraph[,x] <- as.factor(dfGraph[,x])
+        
+
+        
         if(!is.numeric(dfGraph[,x]) & 
            length(unique(dfGraph[,x])) > 6 )
         {
@@ -131,8 +140,7 @@ boxplot3TabModule <- function(input, output, session) {
             )
         }
         
-        
-        
+
         output$plot1 <- renderPlot({
 
             ggObj <- ggplot(data=dfGraph,
@@ -144,11 +152,11 @@ boxplot3TabModule <- function(input, output, session) {
             # ylim(graphOption[["minY"]][1], graphOption[["maxY"]][1]) +
             # guides(color = guide_legend(override.aes = list(size = 10))) +
             labs(title=paste0(sourcingCat,"  ",chosenDFSourceFile),
-                 x=graphOption[["xAxisTitle"]][1], y=graphOption[["yAxisTitle"]][1]) +
+                 x=graphOption[["xAxisTitle"]][1], y=graphOption[["yAxisTitle"]][1],
+                 color=attr(dfGraph[,color],"labelShort")) +
             theme(legend.title = element_text(size = 40),
                   legend.text  = element_text(size = 25))
-                  # legend.key.size = unit(0.1, "lines"))
-            
+
             if( y %in% names(MinReqExplore) && !is.na(MinReqExplore[y])) 
                 ggObj <- ggObj + geom_hline(yintercept=MinReqExplore[y])
             if( y %in% names(MaxReqExplore) && !is.na(MaxReqExplore[y])) 
@@ -158,18 +166,26 @@ boxplot3TabModule <- function(input, output, session) {
         })
         
         output$table1 <- renderTable({
-            stringCode <- paste0("kk <- dfGraph %>% group_by(", x, ", ", color, ")")
+            browser()
+            if(is.null(color) ) {
+                stringCode <- paste0("kk <- dfGraph %>% group_by(", x, ")")  
+            } else if(x==color) {
+                stringCode <- paste0("kk <- dfGraph %>% group_by(", x, ")")  
+            } else       {
+                stringCode <- paste0("kk <- dfGraph %>% group_by(", x, ", ", color, ")")
+            }
+
             exprCode <- parse(text=stringCode)
             eval(exprCode)
-            
+
             stringCode <- paste0( "kk <- kk %>% summarize(noData=n()) %>% spread(key=",
                                   x, ", value=noData)")
             exprCode <- parse(text=stringCode)
             eval(exprCode)
-            
+
             # kk <- kk %>%
             #     summarize(noData=n()) %>% spread(key=project, value=noData)
-            
+
         }, striped=TRUE, hover=TRUE, bordered=TRUE)
         
     })

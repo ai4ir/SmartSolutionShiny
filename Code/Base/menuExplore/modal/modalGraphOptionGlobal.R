@@ -3,9 +3,9 @@
 #                     legendTitleSize=40, legendTextSize=25, xAxisTitle="xTitle", yAxisTitle="yTitle",
 #                     fitOption="NoFit")
 
-aesList <- list(x=NA, y=NA, color=NULL, size=NULL, shape=NULL, fill=NULL, grid=NULL, tooltip=NULL, data_id="rowNoSource", 
-                axisTitleSize=40, axisTextSize=30, pointSize=3, colorLegendPointSize=8, 
-                legendTitleSize=40, legendTextSize=25, fitOption="NoFit", clusterMethod=NA, spare1=NULL, pValueVector=NA)
+# aesList <- list(x=NA, y=NA, color=NULL, size=NULL, shape=NULL, fill=NULL, grid=NULL, tooltip=NULL, data_id="rowNoSource", 
+#                 axisTitleSize=40, axisTextSize=30, pointSize=3, colorLegendPointSize=8, 
+#                 legendTitleSize=40, legendTextSize=25, fitOption="NoFit", clusterMethod=NA, spare1=NULL, pValueVector=NA)
 
 graphOption <- list(minX=0, maxX=100, minY=0, maxY=100, 
                     xAxisTitle="xTitle", yAxisTitle="yTitle")
@@ -16,7 +16,7 @@ ModalGraphOptionGlobal <- function(failed = FALSE) {
   
   modalDialog(
     title=labelStr,
-    radioButtons("fitOption","Fit Option", choiceNames = c("NoFit", "Fit1", "Fit2"), choiceValues=c("NoFit", "Fit1", "Fit2"), 
+    radioButtons("fitOption","Fit Option", choiceNames = c("NoFit", "Fit1", "Fit2", "Fit3"), choiceValues=c("NoFit", "Fit1", "Fit2", "Fit3"), 
                        selected=aesList[["fitOption"]]),
     tags$p(""),
     tags$p(""),

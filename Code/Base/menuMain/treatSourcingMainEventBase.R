@@ -66,6 +66,21 @@ treatSourcingMainEventBase <- function(input, output, session) {
     
   })
   
+  observeEvent(input$renderReportCommonCollectDiag, {
+    pathFileRmdCommonPlot <<- "Base/common/Rmd/commonPlotReportCollectDiag.Rmd"
+    curCommonPlot <<- "CollectDiag"
+    fileNameSuffix <<- "_CollectDiag_"
+    aesList[["y"]] <<- NA
+    triggerMCP <<- "commonPlot_CollectDiag"
+    showModal(ModalCommonPlot())
+    hideButton=c("MCP_y","MCP_color", "MCP_size", "MCP_shape", "MCP_tooltip", "MCP_data_id",
+                 "MCP_fitOption")
+    for(i in seq_along(hideButton)) {
+      hide(hideButton[i])
+    }
+    
+  })
+  
   observe({
     treatModalCommonPlot(input, output, session)
   })

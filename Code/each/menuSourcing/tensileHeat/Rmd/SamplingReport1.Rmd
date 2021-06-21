@@ -1,0 +1,325 @@
+---
+title: "ReportSourcing2"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    DFSource: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+
+DFSource <- DFSource
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Summary Table  
+ - [ContVarTable] page  
+ - [CatVarTable] page  
+ 
+Box Plot  
+ - [cylinder] page  
+  - [auto_manual] page  
+ 
+Scatter Plot  
+ - [mpg_disp] page  
+ - [hp_disp] page   
+ - [hp_mpg] page  
+ 
+ 
+ 
+
+ 
+
+ContVarTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+No. of Observation : `r NROW(DFSource)`
+No. of variables : `r NCOL(DFSource)`
+
+Row {data-height=485}
+---------------------------------------------
+
+### 
+```{r, contVarTable1}
+summary <- function(x) {
+  funs <- c(min, mean, max, sd)
+  lapply(funs, function(f) f(x, na.rm=TRUE))
+}
+
+dfContVar <- Filter(is.numeric, DFSource)
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+# dfTableContVar <- as.data.frame(lapply(lapply(dfContVar, summary), unlist))
+
+# row.names(dfTableContVar) <- c("최소", "평균", "최대", "편차")
+DT::datatable(dfTableContVar,
+              rownames = c("min", "mean", "max", "sd"),
+              colnames = c("displacement"="disp", "horsepower"="hp")) %>%
+  formatRound(c("mpg","cyl","displacement","horsepower","drat","wt","qsec","vs","am","gear","carb"),
+              c(1,0,1,0,2,3,2,0,0,0,0)) 
+
+
+```
+
+Row {data-height=485}
+---------------------------------------------
+### 
+```{r, contVarTable2}
+summary <- function(x) {
+  funs <- c(NROW(x))
+}
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+
+DT::datatable(dfTableContVar)
+```
+
+
+CatVarTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=170}
+---------------------------------------------
+
+### 
+```{r, catVarTable1}
+# dfCatVar <- Filter(is.factor, DFSource)
+dfCatVar <- DFSource[,c("cyl", "vs", "am","gear", "carb")]
+catVarNames <- c("cyl", "vs", "am","gear", "carb")
+dfCatVarLevels <- list("cyl", "vs", "am","gear", "carb" )
+names(dfCatVarLevels) <- catVarNames
+for(i in 1:NROW(catVarNames)) {
+  if(is.factor(DFSource[,catVarNames[i]][[1]])) {
+    dfCatVarLevels[[catVarNames[i]]] <-
+      attr(diamonds[,catVarNames[i]][[1]], "levels")
+  } else {
+    dfCatVarLevels[[catVarNames[i]]] <-
+      as.character(unique(DFSource[,catVarNames[i]]))
+  }
+}
+
+dfTableCatVar <- lapply(dfCatVarLevels,sort) %>% lapply(str_c,collapse=", ") %>%
+  as.data.frame 
+DT::datatable(dfTableCatVar, options=list(dom='t'))
+```
+
+Row {data-height=250}
+---------------------------------------------
+### 
+```{r, catVarTable2}
+renderTable <- function(dfGroups) {
+  calcMean <- function(index, varName) {
+    valueVec <- dfContVar[index,varName]
+    mean(valueVec, na.rm=TRUE)
+  }
+  noRecord <- lapply(dfGroups$.rows, NROW) %>% unlist
+  mpg <- lapply(dfGroups$.rows, calcMean, varName="mpg") %>% unlist
+  disp <- lapply(dfGroups$.rows, calcMean, varName="disp") %>% unlist
+  hp <- lapply(dfGroups$.rows, calcMean, varName="hp") %>% unlist
+  wt <- lapply(dfGroups$.rows, calcMean, varName="wt") %>% unlist
+  dfTable <- dfGroups %>% mutate(noRecord=noRecord, mpg=mpg, disp=disp, hp=hp, wt=wt) %>% 
+    select(-.rows)  
+  DT::datatable(dfTable, rownames=FALSE, 
+                options=list(dom='t')) %>%
+    formatRound(c("mpg", "disp", "hp", "wt"), c(1,1,0,3))
+                # options=list(dom='t', autoWidth=TRUE, columnDefs=list(list(width='200px'))))
+  
+}
+dfGroups <- dfContVar %>% group_by(cyl) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+Row {data-height=250}
+---------------------------------------------
+
+### 
+```{r, catVarTable3}
+dfGroups <- dfContVar %>% group_by(am) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+### 
+```{r, catVarTable4}
+dfGroups <- dfContVar %>% group_by(vs) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+Row {data-height=300}
+---------------------------------------------
+
+
+
+cylinder{data-navmenu="Box Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, cyl_boxplot1}
+ ggplot(data=DFSource, mapping=aes(x=cyl, y=mpg)) + geom_boxplot(mapping=aes(group=cyl))
+```
+
+### 
+```{r, cyl_boxplot2}
+ ggplot(data=DFSource, mapping=aes(x=cyl, y=disp)) + geom_boxplot(mapping=aes(group=cyl))
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, cyl_boxplot3}
+ ggplot(data=DFSource, mapping=aes(x=cyl, y=hp)) + geom_boxplot(mapping=aes(group=cyl))
+```
+
+### 
+```{r, cyl_boxplot4}
+ ggplot(data=DFSource, mapping=aes(x=cyl, y=wt)) + geom_boxplot(mapping=aes(group=cyl))
+```
+
+auto_manual{data-navmenu="Box Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, am_boxplot1}
+ ggplot(data=DFSource, mapping=aes(x=am, y=mpg)) + geom_boxplot(mapping=aes(group=am))
+```
+
+### 
+```{r, am_boxplot2}
+ ggplot(data=DFSource, mapping=aes(x=am, y=disp)) + geom_boxplot(mapping=aes(group=am))
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, am_boxplot3}
+ ggplot(data=DFSource, mapping=aes(x=am, y=hp)) + geom_boxplot(mapping=aes(group=am))
+```
+
+### 
+```{r, am_boxplot4}
+ ggplot(data=DFSource, mapping=aes(x=am, y=wt)) + geom_boxplot(mapping=aes(group=am))
+```
+
+mpg_disp {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, mpg_disp_1}
+renderScatterPlot <- function(x, y, color) {
+    dfGraph <- DFSource %>% select(x,y,color) 
+    dfGraph[,color] <- as.factor(dfGraph[,color])
+    ggplot(dfGraph, aes_string(x=x, y=y, color=color)) + geom_point() 
+}
+renderScatterPlot(x="disp", y="mpg", color="cyl")
+```
+
+### 
+```{r, mpg_disp_2}
+renderScatterPlot(x="disp", y="mpg", color="am")
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, mpg_disp_3}
+renderScatterPlot(x="disp", y="mpg", color="gear")
+```
+
+### 
+```{r, mpg_disp_4}
+renderScatterPlot(x="disp", y="mpg", color="carb")
+```
+
+hp_disp {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, hp_disp_1}
+renderScatterPlot(x="disp", y="hp", color="cyl")
+```
+
+### 
+```{r, hp_disp_2}
+renderScatterPlot(x="disp", y="hp", color="am")
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, hp_disp_3}
+renderScatterPlot(x="disp", y="hp", color="gear")
+```
+
+### 
+```{r, hp_disp_4}
+renderScatterPlot(x="disp", y="hp", color="carb")
+```
+
+hp_mpg {data-navmenu="Scatter Plot"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, hp_mpg_1}
+renderScatterPlot(x="mpg", y="hp", color="cyl")
+```
+
+### 
+```{r, hp_mpg_2}
+renderScatterPlot(x="mpg", y="hp", color="am")
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, hp_mpg_3}
+renderScatterPlot(x="mpg", y="hp", color="gear")
+```
+
+### 
+```{r, hp_mpg_4}
+renderScatterPlot(x="mpg", y="hp", color="carb")
+```

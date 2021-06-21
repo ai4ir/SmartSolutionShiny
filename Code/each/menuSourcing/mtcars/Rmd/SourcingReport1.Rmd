@@ -22,8 +22,8 @@ library(htmltools)
 library(reshape2)
 library(DT)
 
-DFSource <- DFSource
-DFSource <- select(DFSource, -sampleCode, -bHOT, -clusterGr)
+DFSource <- params$DFSource
+# DFSource <- select(DFSource, -sampleCode, -bHOT, -clusterGr)
 
 theme_update(axis.title=element_text(size=20))
 theme_update(axis.text=element_text(size=15))

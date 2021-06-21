@@ -1,0 +1,368 @@
+---
+title: "ReportSourcing2"
+author: "C.S.Lee"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    DFSource: NA
+    MaxDomainExplore: NA
+    MinDomainExplore: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+knitr::opts_chunk$set(echo=FALSE)
+
+# library(tidyverse)
+# library(lubridate)
+# library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+# library(reshape2)
+# library(DT)
+
+DFSource <- params$DFSource
+MaxDomainExplore <- params$MaxDomainExplore
+MinDomainExplore <- params$MinDomainExplore
+
+theme_update(axis.title=element_text(size=20))
+theme_update(axis.text=element_text(size=15))
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+Summary Table  
+ - [ContVarTable] page  
+ - [CatMeanTable] page  
+ 
+CatMean Table  
+ - [CatFailTable1] page   
+ - [CatFailTable3] page  
+ - [CatFailTable5] page  
+ 
+  
+ 
+ 
+ 
+
+ 
+
+ContVarTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+No. of Observation : `r NROW(DFSource)`
+No. of variables : `r NCOL(DFSource)`
+
+Row {data-height=485}
+---------------------------------------------
+
+### 
+```{r, contVarTable1}
+summary <- function(x) {
+  funs <- c(min, mean, max, sd)
+  lapply(funs, function(f) f(x, na.rm=TRUE))
+}
+
+dfContVar <- Filter(is.numeric, DFSource)
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+# dfTableContVar <- as.data.frame(lapply(lapply(dfContVar, summary), unlist))
+
+# row.names(dfTableContVar) <- c("최소", "평균", "최대", "편차")
+DT::datatable(dfTableContVar,
+              rownames = c("min", "mean", "max", "sd"),
+              colnames = c("displacement"="disp", "horsepower"="hp")) %>%
+  formatRound(c("mpg","cyl","displacement","horsepower","drat","wt","qsec","vs","am","gear","carb"),
+              c(1,0,1,0,2,3,2,0,0,0,0)) 
+
+
+```
+
+Row {data-height=485}
+---------------------------------------------
+### 
+```{r, contVarTable2}
+summary <- function(x) {
+  funs <- c(NROW(x))
+}
+dfTableContVar <- lapply(dfContVar, summary) %>% lapply(unlist) %>% as.data.frame
+
+DT::datatable(dfTableContVar)
+```
+
+
+CatMeanTable{data-navmenu="Summary Table"}
+=============================================
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+Row {data-height=170}
+---------------------------------------------
+
+### 
+```{r, catVarTable1}
+# dfCatVar <- Filter(is.factor, DFSource)
+dfCatVar <- DFSource[,c("cyl", "vs", "am","gear", "carb")]
+catVarNames <- c("cyl", "vs", "am","gear", "carb")
+dfCatVarLevels <- list("cyl", "vs", "am","gear", "carb" )
+names(dfCatVarLevels) <- catVarNames
+for(i in 1:NROW(catVarNames)) {
+  if(is.factor(DFSource[,catVarNames[i]][[1]])) {
+    dfCatVarLevels[[catVarNames[i]]] <-
+      attr(diamonds[,catVarNames[i]][[1]], "levels")
+  } else {
+    dfCatVarLevels[[catVarNames[i]]] <-
+      as.character(unique(DFSource[,catVarNames[i]]))
+  }
+}
+
+dfTableCatVar <- lapply(dfCatVarLevels,sort) %>% lapply(str_c,collapse=", ") %>%
+  as.data.frame 
+DT::datatable(dfTableCatVar, options=list(dom='t'))
+```
+
+Row {data-height=250}
+---------------------------------------------
+### 
+```{r, catVarTable2}
+renderTable <- function(dfGroups) {
+
+  calcMean <- function(index, varName) {
+    valueVec <- dfContVar[index,varName]
+    mean(valueVec, na.rm=TRUE)
+  }
+  noRecord <- lapply(dfGroups$.rows, NROW) %>% unlist
+  mpg <- lapply(dfGroups$.rows, calcMean, varName="mpg") %>% unlist
+  disp <- lapply(dfGroups$.rows, calcMean, varName="disp") %>% unlist
+  hp <- lapply(dfGroups$.rows, calcMean, varName="hp") %>% unlist
+  wt <- lapply(dfGroups$.rows, calcMean, varName="wt") %>% unlist
+  dfTable <- dfGroups %>% mutate(noRecord=noRecord, mpg=mpg, disp=disp, hp=hp, wt=wt) %>% 
+    select(-.rows)  
+  DT::datatable(dfTable, rownames=FALSE, 
+                options=list(dom='t')) %>%
+    formatRound(c("mpg", "disp", "hp", "wt"), c(1,1,0,3))
+                # options=list(dom='t', autoWidth=TRUE, columnDefs=list(list(width='200px'))))
+  
+}
+dfGroups <- dfContVar %>% group_by(cyl) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+Row {data-height=250}
+---------------------------------------------
+
+### 
+```{r, catVarTable3}
+dfGroups <- dfContVar %>% group_by(am) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+### 
+```{r, catVarTable4}
+dfGroups <- dfContVar %>% group_by(vs) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+Row {data-height=300}
+---------------------------------------------
+
+### 
+```{r, catVarTable5}
+dfGroups <- dfContVar %>% group_by(am, vs) %>% attr("groups")
+renderTable(dfGroups=dfGroups)
+```
+
+CatFailTable1{data-navmenu="CatFail Table"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, catFailTable1}
+### 수동 개발용 코드 ###
+### 수동 개발용 코드 ###
+# DFSource <- curSampleExplore                ###  sampling 리포트인 경우 curSampleExplore가 DFSource임
+# dfContVar <- Filter(is.numeric, DFSource)   ###
+# MinDomainExplore <- c(20,NA,NA,200,2)
+# names(MinDomainExplore) <- c("mpg","cyl","disp","hp","wt")
+# MaxDomainExplore <- c(30,NA,NA,NA,4)
+# names(MaxDomainExplore) <- c("mpg","cyl","disp","hp","wt")
+### 수동 개발용 코드 ###
+### 수동 개발용 코드 ###
+OBTVarList <- list(sliceVar=NA, boundVar=NA)
+varName1 <- extractCatVarName(DFSource)
+varName2 <- extractNumVarName(DFSource)
+func1 <- function(x) {
+  length(unique(DFSource[,x])) < 4
+}
+bool <- vapply(varName2, func1, FUN.VALUE = logical(1))
+sliceVarSet <- union(varName1, varName2[bool])
+sliceVarBase <- c("am")
+sliceVarSet <- setdiff(sliceVarSet, sliceVarBase)
+OBTVarList[["boundVar"]] <- c(varName2[!bool])
+noSliceVar <- length(sliceVarBase) + 1
+
+renderDFGroups <- function(x) {
+  OBTVarList[["sliceVar"]] <<- c(sliceVarBase, sliceVarSet[x] )
+  switch(as.character(noSliceVar),
+         "1" = {
+           dfGroups <- DFSource %>% group_by(get(OBTVarList[["sliceVar"]][1]))
+         },
+         "2" = {
+           
+           dfGroups <- DFSource %>% group_by(get(OBTVarList[["sliceVar"]][1]), get(OBTVarList[["sliceVar"]][2]))
+  
+         },
+         "3" = {
+  
+         },
+         "4" = {
+  
+         })
+  return(dfGroups)
+}
+
+dfGroups <- renderDFGroups(1)
+
+
+# dfGroups <- DFSource %>% group_by(get(OBTVarList[["sliceVar"]][1]), get(OBTVarList[["sliceVar"]][2]))
+renderTable2 <- function(dfGroups) {
+  dfGroupsAttr <- dfGroups %>% attr("groups")
+  colnames(dfGroupsAttr) <- c(OBTVarList[["sliceVar"]], ".rows")
+  OBTable <- dfGroupsAttr %>% select(-.rows)  
+  
+  calcFailPercent <- function(df) {
+    # df <- dfGroups                         ### 수동 개발용 코드 ###
+    if(is.null(attr(df,"group"))){
+        bool <- df$bHOT == "Normal"
+        mean(bool)
+    } else {
+        ratio <- vector("double", nrow(attr(df,"group")))
+        for(i in 1:nrow(attr(df,"group"))) {
+            slice <- df[attr(df, "group")[[i,".rows"]], ]
+            bool <- slice$bHOT == "Normal"
+            ratio[i] <- mean(bool)
+        }
+        ratio
+    }
+  }
+  countOBL <- function(index, df, varName, bound) {
+    # browser()
+    valueVec <- df[index,varName]
+    bool <- valueVec < bound
+    sum(bool)
+  }
+  countOBU <- function(index, df, varName, bound) {
+    # browser()
+    valueVec <- df[index,varName]
+    bool <- valueVec > bound
+    sum(bool)
+  }
+
+  noRecord <- lapply(dfGroupsAttr$.rows, NROW) %>% unlist
+  FailPercent <-  calcFailPercent(df=dfGroups) * 100
+  OBTable <- OBTable %>%  mutate(noRecord=noRecord, FailPercent=FailPercent)
+  listVector <- as.data.frame(dfGroupsAttr[,".rows"])[,".rows"]
+  for(i in 1:length(OBTVarList[["boundVar"]])) {
+    boundVar <- OBTVarList[["boundVar"]][i]
+    minValue <- MinDomainExplore[boundVar]
+    maxValue <- MaxDomainExplore[boundVar]
+    # minValue <- 20
+    # maxValue <- 20
+    if(!is.na(minValue) || !is.na(maxValue)) {
+      OBTable[paste0(boundVar,"_OBL")] <- 
+        vapply(listVector, countOBL, df=dfGroups, varName=boundVar, bound=minValue,FUN.VALUE=numeric(1) )
+      OBTable[paste0(boundVar,"_OBU")] <- 
+        vapply(listVector, countOBU, df=dfGroups, varName=boundVar, bound=maxValue,FUN.VALUE=numeric(1) )
+      
+    }
+
+      
+  }
+
+
+  DT::datatable(OBTable, rownames=FALSE, 
+                options=list(dom='t')) 
+  
+}
+renderTable2(dfGroups=dfGroups)
+
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, catFailTable2}
+dfGroups <- renderDFGroups(2)
+renderTable2(dfGroups=dfGroups)
+
+```
+
+CatFailTable3{data-navmenu="CatFail Table"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, catFailTable3}
+dfGroups <- renderDFGroups(3)
+renderTable2(dfGroups=dfGroups)
+
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, catFailTable4}
+dfGroups <- renderDFGroups(4)
+renderTable2(dfGroups=dfGroups)
+
+```
+
+CatFailTable5{data-navmenu="CatFail Table"}
+=============================================
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, catFailTable5}
+dfGroups <- renderDFGroups(5)
+renderTable2(dfGroups=dfGroups)
+
+```
+
+Row {data-height=500}
+---------------------------------------------
+
+### 
+```{r, catFailTable6}
+dfGroups <- renderDFGroups(6)
+renderTable2(dfGroups=dfGroups)
+
+```
+
+test1{data-navmenu="Test"}
+=============================================
+
+### 
+```{r, test1}
+library(summarytools)
+# DFSource <- curSampleExplore                ###  sampling 리포트인 경우 curSampleExplore가 DFSource임
+# view(dfSummary(DFSource))
+dfSummary(DFSource)
+
+```

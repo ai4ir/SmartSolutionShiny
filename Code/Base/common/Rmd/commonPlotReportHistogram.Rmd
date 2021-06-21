@@ -74,19 +74,33 @@ aesList[["x"]] <- setdiff(aesList[["x"]],
 
 dfGraph <- as.data.frame(df[,aesList[["x"]]]) 
 
+# dfGraph <- as.data.frame(dfReportCommon[,aesList[["x"]]]) 
+# xxx <- stat_bin(data=dfGraph,aes(x=Ni))
+
+
 renderHistogram <- function(xVarNo) {
-    # colnames(dfGraph) <- x
-    gg1 <- ggplot(data=dfGraph,aes_string(x = aesList[["x"]][xVarNo])) +
-      geom_histogram()
-    if(!is.na(attr(df[,aesList[["x"]][xVarNo]], "validMin"))) 
-      gg1 <- gg1 + geom_vline(xintercept=attr(df[,aesList[["x"]][xVarNo]], "validMin"), color="blue") 
-    if(!is.na(attr(df[,aesList[["x"]][xVarNo]], "validMax"))) 
-      gg1 <- gg1 + geom_vline(xintercept=attr(df[,aesList[["x"]][xVarNo]], "validMax"), color="red")
-    gg1
+  # colnames(dfGraph) <- x  ; xVarNo <- 1
+  labelAnnotate <- paste0("Shapiro P Value : ",round(aesList[["pValueVector"]][xVarNo],3))
+  xVar <- aesList[["x"]][xVarNo]
+  xAnnotate <-  min(dfGraph[,xVar],na.rm=TRUE) +
+    0.7*(max(dfGraph[,xVar],na.rm=TRUE)-min(dfGraph[,xVar],na.rm=TRUE))
+  gg1 <- ggplot(data=dfGraph,aes_string(x = aesList[["x"]][xVarNo])) +  geom_histogram() +
+    annotate("text",
+             # x=xAnnotate,
+             x=Inf, hjust=2, 
+             y=Inf, vjust=5,  label=labelAnnotate, color="black", size=2)
+  if(!is.null(attr(dfGraph[,aesList[["x"]][xVarNo]], "validMin")) ) 
+    gg1 <- gg1 + geom_vline(xintercept=attr(dfGraph[,aesList[["x"]][xVarNo]], "validMin"), color="blue") 
+  if(!is.null(attr(dfGraph[,aesList[["x"]][xVarNo]], "validMax")) ) 
+    gg1 <- gg1 + geom_vline(xintercept=attr(dfGraph[,aesList[["x"]][xVarNo]], "validMax"), color="red")
+  gg1
 }
 
 # renderHistogram(1)
 renderHistogramSet <- function(xVarNo) {
+  if(is.na(x=aesList[["x"]][xVarNo])) {
+    return()
+  }
   gg1 <- NULL; gg2 <- NULL; gg3 <- NULL; gg4 <- NULL;
   if(!is.na(x=aesList[["x"]][xVarNo])) gg1 <- renderHistogram(xVarNo)
   if(!is.na(x=aesList[["x"]][xVarNo+1])) gg2 <- renderHistogram(xVarNo+1)

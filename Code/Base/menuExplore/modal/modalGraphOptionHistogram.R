@@ -10,6 +10,10 @@ ModalGraphOptionHistogram <- function(failed = FALSE) {
     title=labelStr,
     textInput("xAxisTitle", label = h4("X축 제목"), value = aesList[["x"]][1]),
     # textInput("yAxisTitle", label = h4("Y축 제목"), value = aesList[["y"]][1]),
+    numericInput("minX", label = h4("X축 최소값"),
+                 value = min(curSampleExplore[,aesList[["x"]][1]], na.rm=TRUE)),
+    numericInput("maxX", label = h4("X축 최대값"),
+                 value = max(curSampleExplore[,aesList[["x"]][1]], na.rm=TRUE)),
     numericInput("axisTitleSize", label = h4("축 제목 크기(권장:30~50)"), 
                  value = graphOption[["axisTitleSize"]][1]),
     numericInput("axisTextSize", label = h4("축 라벨 크기(권장:20~40)"), 
@@ -37,6 +41,8 @@ treatModalGraphOptionHistogram <- function(input, output, session) {
   observeEvent(input$okModalGraphOptionHistogram, {
     graphOption[["xAxisTitle"]][1] <<- input$xAxisTitle
     # graphOption[["yAxisTitle"]][1] <<- input$yAxisTitle
+    graphOption[["minX"]][1] <<- input$minX
+    graphOption[["maxX"]][1] <<- input$maxX
     graphOption[["axisTitleSize"]][1] <<- input$axisTitleSize
     graphOption[["axisTextSize"]][1] <<- input$axisTextSize
 

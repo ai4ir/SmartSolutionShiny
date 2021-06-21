@@ -144,37 +144,17 @@ predictMain <- function(input, output, session) {
   output$PredResult <- renderText({
     # str <- paste0(stringList[["predict"]][["predictTab1"]][["pred"]], 
     #               round(reactPredVal(),digitList[["predict"]][["predictTab1"]][["pred"]]) )
-    reactPredVal()
-    strPred <- curDesignDF %>% renderStrPred()
+    predVal <- reactPredVal()
+    strPred <- predVal %>% renderStrPred()
     strPred
   })
   
   output$PredResultFail <- renderText({
     predVal <- req(reactPredVal())
-    std <- 12
     
-    modelY <- dfModelNest[["modelY"]][[1]]
+    strFailRatio <- renderStrFailRatio(predVal)
     
-    if(is.null(MinReqExplore[modelY])) {
-      failPercentUnderReq <- 0.0
-    } else {
-      zMin <- (MinReqExplore[modelY] - predVal) / 12
-      failPercentUnderReq <- round(100 * pnorm(zMin),2)
-    }
-    
-    if(is.null(MaxReqExplore[modelY])) {
-      failPercentOverReq <- 0.0
-    } else {
-      zMax <- (MaxReqExplore[modelY] - predVal) / 12
-      failPercentOverReq <- round(100 * pnorm(zMax, lower.tail=FALSE),2)
-    }
-    percentInside <- round(100 - failPercentUnderReq - failPercentOverReq, 2)
-    str <- paste0(failPercentUnderReq,"%, ", MinReqExplore[modelY], "MPa, ", 
-                  percentInside, "%, ", MaxReqExplore[modelY], "MPa, ",
-                  failPercentOverReq, "%"
-    )
-    # print(paste0("output$PredResultFailOptom - str :", str))
-    str
+    strFailRatio
   })
   
   # output$PredResultFail <- renderText({
@@ -184,7 +164,7 @@ predictMain <- function(input, output, session) {
   #     hide("PredResultFail")
   #     return()
   #   } else {
-  #     show("PredResultFail")
+  #     shiny::show("PredResultFail")
   #   }
   #   
   #   std <- 12
@@ -210,21 +190,7 @@ predictMain <- function(input, output, session) {
   #   str
   # })
   
-  observeEvent(input$renderReportSampling, {
-    # showModal(ModalCheckboxGroup(outputFileNamesSamplingReport, outputFileNamesSamplingReport,
-    #                              "okModalReportSampling"))
-    showModal(ModalCheckboxGroup(title="리포트 선정 대화창", modalCheckboxID="ModalCheckboxGroup", label="리포트 선정",
-                                 choiceNames=outputFileFinalNamesSamplingReport, choiceValues=outputFileNamesSamplingReport,
-                                 modalOKButtonID="okModalReportSampling"))
-  })
-  
-  observeEvent(input$okModalReportSampling, {
-    # params <- list(DFSource=curSampleExplore, MaxDomainExplore=MaxDomainExplore, MinDomainExplore=MinDomainExplore)
-    DFSourceRmd <- curSampleExplore %>% select(-c(sampleCode, bHOT, clusterGr))
-    params <- list(DFSource=DFSourceRmd, pathHTMLReport=pathHTMLReport)
-    renderReportCheckboxGroup(input, output, session, params, outputFileNamesSamplingReport, outputFileFinalNamesSamplingReport,
-                              pathFileRmdSamplingReport, pathHTMLReport)
-  })
+
   
   # 범용 리포트
   # observeEvent(input$renderReportCommonSample, {

@@ -1,0 +1,264 @@
+---
+title: "AI VF 도출 보고서"
+author: "뿌리산업 융합솔루션팀"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    selVar: NA
+    targetVar: NA
+    cTreeList: NA
+    rangerList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+# Sys.setlocale( "LC_ALL", "C")
+knitr::opts_chunk$set(echo=FALSE)
+options(warn=-1)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+if(!library(ggiraph, logical.return=TRUE)) {
+    install.packages("ggiraph")
+    library(ggiraph)
+}
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+
+### 내부 디버깅 ###
+# df <- curSampleExplore
+# selVar <- cTreeList[["varX"]]
+# targetVar <- cTreeList[["varY"]]
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+selVar <- params$selVar  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+targetVar <- params$targetVar  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+cTreeList <- params$cTreeList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+rangerList <- params$rangerList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=10))
+theme_update(axis.text=element_text(size=8))
+# theme_update(legend.text = element_text(size=8))
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+extractCatVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  catVar <- varNameVec[!booleanVec]
+  return(catVar)
+}
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+
+cTree  
+ - [cTree1] page  
+ 
+ranger  
+ - [ranger1] page  
+ 
+randomForest  
+ - [randomForest1] page  
+ - [catVar4] page  
+ - [catVar5] page  
+
+
+Structure  
+ - [structure1] page  
+
+
+ 
+   
+
+
+
+cTree1 {data-navmenu="cTree"}
+=============================================
+
+
+Row {data-height=970}
+---------------------------------------------
+
+### 
+```{r, cTree1_1}
+var <- union(selVar, targetVar)
+df <- df[,c(var)]
+if(!is.numeric(df[,targetVar])) {
+  df[,targetVar] <- as.factor(df[,targetVar])
+}
+
+boolValidRow <- !is.na(df[,targetVar])
+
+curSampleCTree <<- df[boolValidRow,]
+
+df <- curSampleCTree
+###  sticky 가 없어야 classification tree 가 가능함
+for(v in colnames(df)) {
+  df[,v] <- unstick(df[,v])
+}
+
+treeControl <- ctree_control(mincriterion=1 - cTreeList[["maxPValue"]], maxdepth=cTreeList[["maxDepth"]], stump=FALSE)
+fmla <- as.formula(paste0(targetVar, " ~ ."))
+cTreeResult <- ctree(fmla, df, controls=treeControl)
+
+plot(cTreeResult)
+
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+ranger1 {data-navmenu="ranger"}
+=============================================
+
+Row {data-height=170}
+---------------------------------------------
+
+### 
+```{r, ranger1_1}
+var <- union(selVar, targetVar)
+df <- df[,c(var)]
+if(!is.numeric(df[,targetVar])) {
+  df[,targetVar] <- as.factor(df[,targetVar])
+}
+
+boolValidRow <- !is.na(df[,targetVar])
+
+curSampleranger <<- df[boolValidRow,]
+
+df <- curSampleranger
+df <- df[complete.cases(df),]
+
+
+###  sticky 가 없어야 classification tree 가 가능함
+for(v in colnames(df)) {
+  df[,v] <- unstick(df[,v])
+}
+
+df_train <- df
+t.formula <- paste0(targetVar, " ~ .")
+
+rf  <- ranger(formula = eval(parse(text = (t.formula))),importance = "permutation",
+              data = df_train, num.threads = 20, seed = 1000, 
+              num.trees = rangerList[["num.trees"]], respect.unordered.factors = TRUE)
+
+pred.nrl <- predict(rf, data=df)
+
+# rf$variable.importance
+
+resultRanger <- pred.nrl$predictions
+
+rf$variable.importance
+
+```
+
+Row {data-height=800}
+---------------------------------------------
+
+### 
+```{r, ranger1_2}
+
+plot(df[,targetVar], resultRanger)
+
+```
+
+randomForest1 {data-navmenu="randomForest"}
+=============================================
+
+Row {data-height=170}
+---------------------------------------------
+
+### 
+```{r, randomForest1_1}
+var <- union(selVar, targetVar)
+df <- df[,c(var)]
+if(!is.numeric(df[,targetVar])) {
+  df[,targetVar] <- as.factor(df[,targetVar])
+}
+
+boolValidRow <- !is.na(df[,targetVar])
+
+curSamplerandomForest <<- df[boolValidRow,]
+
+df <- curSamplerandomForest
+
+
+###  sticky 가 없어야 classification tree 가 가능함
+for(v in colnames(df)) {
+  df[,v] <- unstick(df[,v])
+}
+
+df <- df[complete.cases(df),]
+df_train <- df
+t.formula <- paste0(targetVar, " ~ .")
+
+
+rf <- randomForest(formula = eval(parse(text = (t.formula))), data = df_train,
+                   num.trees = randomForestList[["num.trees"]],importance = T)
+
+rf$importance
+
+```
+
+Row {data-height=800}
+---------------------------------------------
+
+### 
+```{r, randomForest1_2}
+
+varImpPlot(rf)
+
+```
+
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`
+
+structure1{data-navmenu="Structure"}
+=============================================
+
+Row {data-height=970}
+---------------------------------------------
+
+```{r, contVarTable2}
+str(df)
+```
+
+Row {data-height=30}
+---------------------------------------------
+Publication Date : `r params$pubDate`

@@ -3,7 +3,7 @@ bar1TabModuleUI <- function(Id) {
     ns <- NS(Id)
     fluidPage(
         fluidRow(
-            column(1 
+            column(1, textOutput(ns("aesList_y")) 
             ),
             column(1, textOutput(ns("aesList_x")) 
             ),
@@ -24,7 +24,7 @@ bar1TabModuleUI <- function(Id) {
             
         ),
         fluidRow(
-            column(1 
+            column(1, actionButton(ns("MCP_y"), label="Y 변수 선정")  
             ),
             column(1, actionButton(ns("MCP_x"), "X 변수 선정") 
             ),
@@ -120,16 +120,15 @@ bar1TabModule <- function(input, output, session) {
             )
         }
         
+        
+        
         output$graph <- renderPlot({
 
             ggObject <- ggplot(data=dfGraph,
                                aes_string(x=aesList[["x"]][1], 
                                           color=aesList[["color"]][1])) +
             geom_bar(aes_string(fill=aesList[["fill"]][1]), position="dodge") +
-            # geom_jitter() +
-            # xlim(graphOption[["minX"]][1], graphOption[["maxX"]][1]) +
-            # ylim(graphOption[["minY"]][1], graphOption[["maxY"]][1]) +
-            # guides(color = guide_legend(override.aes = list(size = 10))) +
+            # stat_summary(fun.y=dplyr::n,geom="bar",fill="White",color="Black") +
             labs(title=paste0(sourcingCat,"  ",chosenDFSourceFile),
                  x=graphOption[["xAxisTitle"]][1]) +
             theme(legend.title = element_text(size = 40),

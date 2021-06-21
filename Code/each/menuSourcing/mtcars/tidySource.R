@@ -4,9 +4,10 @@ tidySource <- function() {
   dfOrg <- mtcars
   
   dfOrg$vs <- as.factor(dfOrg$vs)
-  dfOrg <- dfOrg %>%  mutate(vs=fct_recode(vs,
-                                    "V-shaped"="0",
-                                    "straight"="1"))
+  # dfOrg <- dfOrg %>%  mutate(vs=fct_recode(vs,
+  #                                   "V-shaped"="0",
+  #                                   "straight"="1"))
+  levels(dfOrg$vs) <- c("V-shaped","straight")
   dfOrg$am <- as.factor(dfOrg$am)
   dfOrg <- dfOrg %>%  mutate(am=fct_recode(am,
                                            "automatic"="0",

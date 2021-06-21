@@ -40,15 +40,15 @@ loadSource <- function() {
   
   hide("renderReportSourcing")
   # ############## Sourcing 관련 고유 정보 ################
-  # pathFileRmdSourcingReport <<- c("each/menuSourcing/mtcars/Rmd/SourcingReport1.Rmd",
-  #                                 "each/menuSourcing/mtcars/Rmd/SourcingReport2.Rmd"
+  # pathFileRmdSourcingReport <<- c("each/sourcing/mtcars/Rmd/SourcingReport1.Rmd",
+  #                                 "each/sourcing/mtcars/Rmd/SourcingReport2.Rmd"
   # )
   # outputFileNamesSourcingReport <<- c("SourcingReport1.html",
   #                                     "SourcingReport2.html")
   # ############## Sampling 관련 고유 정보 ################
-  # pathFileRmdSamplingReport <<- c("each/menuSourcing/mtcars/Rmd/SamplingReport1.Rmd",
-  #                                 "each/menuSourcing/mtcars/Rmd/SamplingReport2.Rmd",
-  #                                 "each/menuSourcing/mtcars/Rmd/SamplingReportTable.Rmd"
+  # pathFileRmdSamplingReport <<- c("each/sourcing/mtcars/Rmd/SamplingReport1.Rmd",
+  #                                 "each/sourcing/mtcars/Rmd/SamplingReport2.Rmd",
+  #                                 "each/sourcing/mtcars/Rmd/SamplingReportTable.Rmd"
   # )
   # outputFileNamesSamplingReport <<- c("SamplingReport1.html",
   #                                     "SamplingReport2.html",
@@ -166,6 +166,7 @@ renderAttrSamplingUI <- function() {
   }
   
   selCatDomainExplore <<- dfDomainCatExplore
+  selCatDomainExploreInit <<- dfDomainCatExplore
   
   
   
@@ -176,11 +177,52 @@ read_xlsx_meta <- function(filePath) {
   
   ### filePath <- "..\\SourceData\\EXCEL\\mtcars_meta.xlsx"   ### 지우지 마세요
   
-  df <- read_xlsx(filePath, sheet=1, skip=7, col_names=FALSE)
+  df <- read_xlsx(filePath, sheet=1, skip=6, col_names=FALSE)
   df <- as.data.frame(df)
+  # str(df)
+  meta <- read_xlsx(filePath,
+                    sheet=1, range=cell_rows(1:4))
+  meta <- as.data.frame(meta)
+  colnames(df) <- colnames(meta)
+  for(i in 1: NCOL(df)) {
+    attr(df[,i],"validMax") <- meta[1,i]
+    attr(df[,i],"validMin") <- meta[2,i]
+  }
   
-  df <- attachAttr(filePath, df)
+  label <- read_xlsx(filePath,
+                     sheet=1, range=cell_rows(5))
+  label <- as.data.frame(label)
+  for(i in 1: NCOL(df)) {
+    attr(df[,i],"label") <- colnames(label)[i]
+  }
+  
+  labelShort <- read_xlsx(filePath,
+                     sheet=1, range=cell_rows(6))
+  labelShort <- as.data.frame(labelShort)
+  for(i in 1: NCOL(df)) {
+    attr(df[,i],"labelShort") <- colnames(labelShort)[i]
+  }
+  
 
+  
+  
+  
+  numVarConst <- extractNumVarNameAndConst(df)
+  decimalVec <- vapply(numVarConst, renderDigitVector,  FUN.VALUE=numeric(1), df)
+  decimalVec <- as.vector(decimalVec)
+  for(x in numVarConst) {
+    # numVarConst <- "thick"
+    attr(df[,x], "max") <- max(df[,x], na.rm=TRUE)
+    attr(df[,x], "mean") <- mean(df[,x], na.rm=TRUE)
+    attr(df[,x], "min") <- min(df[,x], na.rm=TRUE)
+    attr(df[,x], "digit") <- decimalVec[which(numVarConst==x)]
+    if(!is.na(meta[3,x])) {
+      attr(df[,x],"digit") <- meta[3,x]
+    }
+  }
+  
+  df <- sticky_all(df)
+  
   return(df)
 
 }

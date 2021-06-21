@@ -23,10 +23,10 @@ library(reshape2)
 library(DT)
 
 ### 내부 디버깅 ###
-df <- DFSource
+# df <- DFSource
 
 ### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
-# df <- params$df
+df <- params$df
 
 theme_update(axis.title=element_text(size=20))
 theme_update(axis.text=element_text(size=15))
@@ -259,7 +259,7 @@ Row {data-height=150}
 ---------------------------------------------
 ```{r, catVarLevelTable1_1}
 renderLevelNodata <- function(i) {
-  tl <- table(DFSource[,catVarNames[i]])
+  tl <- table(df[,catVarNames[i]])
   table1 <- t(as.matrix(tl))
   row.names(table1) <- paste( catVarNames[i], "  : no of obs")
   # varName <- paste0("Levels of " ,catVarNames[i])

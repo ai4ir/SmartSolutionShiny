@@ -1,13 +1,16 @@
-validateDF <- function(df, validMax, validMin) {
-
+validateDF <- function(df, varCheckValid) {
+  df <- sticky_all(df)
   selectBool <- rep(TRUE, dim(df)[[1]])
-  
-  for(i in 1:length(validMax)) {
-    selectBool <- updateSelectBool(value=df[,i], min=validMin[i], max=validMax[i], initBool=selectBool)
-    noTRUE <- length(selectBool[selectBool==TRUE])
-    print(paste0("validateSample - varName : ", colnames(df)[i], ",  noTRUE :", noTRUE, ",  min:", validMin[i], ",  max: ", validMax[i]))
+
+  for(var in varCheckValid) {
+    if(is.numeric(df[,var])) {
+      selectBool <- updateSelectBool(value=df[,var], min=attr(df[,var],"validMin"), max=attr(df[,var],"validMax"), initBool=selectBool)
+      noTRUE <- length(selectBool[selectBool==TRUE])
+      print(paste0("validateSample - varName : ", var, ",  noTRUE :", noTRUE, ", 
+                 min:", attr(df[,var],"validMin"), ",  max: ", attr(df[,var],"validMax")))
+    }
+
   }
-  
   validDF <- df[selectBool==TRUE,]
 }
 
@@ -16,25 +19,18 @@ updateSelectBool <- function(value, min, max, initBool) {
   if(is.na(min) & is.na(max)) { return(initBool) }
   if(is.na(min)) min <- -100000000
   if(is.na(max)) max <- 100000000
-  df <- data.frame(value=value, min=min, max=max)
-  # curBool <- ifelse(is.na(df[,"value"]), TRUE, df[,"min"] <= df[,"value"] & df[,"value"] <= df[,"max"] )
-  curBool <- ifelse(is.na(df[,"value"]), FALSE, df[,"min"] <= df[,"value"] & df[,"value"] <= df[,"max"] )
+
+  curBool <- ifelse(is.na(value), FALSE, min <= value & value <= max )
   resultBool <- initBool & curBool
   return(resultBool)
 }
 
-updateSelectBoolCat <- function(value, selectedCat, initBool) {
+updateSelectBoolCat <- function(value, selectedCat, initBool,varName) {
   value <- as.character(value)
-  if ( "ALL" %in% selectedCat ) {
+  if ( "ALL" %in% selectedCat | length(selCatDomainExploreInit[[varName]])==length(selectedCat) ) {
     return(initBool)
   } else {
-    # curBool <-  ifelse(is.na(df[,"value"]), TRUE, ifelse(value %in% selectedCat, TRUE, FALSE))
-    func1 <- function(x) {
-      if(is.na(x)) {FALSE}
-      else if (x %in% selectedCat) {TRUE}
-      else {FALSE}
-    }
-    curBool <- vapply(value, func1, FUN.VALUE=logical(1))
+    curBool <-  ifelse(is.na(value), FALSE, value %in% selectedCat)
     resultBool <- initBool & curBool
     return(resultBool)
   }
@@ -85,7 +81,7 @@ mutateBoolSample <- function(input, output, session) {
       print(paste0("trigerSample - varName ", varName))
       value <- curSampleExplore[,varName]
       selectedCat <- selCatDomainExplore[[varName]]
-      selectBool <- updateSelectBoolCat(value=value, selectedCat=selectedCat, initBool=selectBool)
+      selectBool <- updateSelectBoolCat(value=value, selectedCat=selectedCat, initBool=selectBool,varName=varName)
       noTRUE <- length(selectBool[selectBool==TRUE])
       print(paste0("trigerSample - varName : ", varName, ",  noTRUE :", noTRUE))
     }
@@ -108,13 +104,17 @@ replyButtonBisectArea <- function(input, output, session) {
     clusterSamplingGUI <- vapply(selectBool, func1, FUN.VALUE=character(1))
     attr(clusterSamplingGUI, "label") <- "cluseter By Sampling GUI" ; 
     attr(clusterSamplingGUI, "labelShort") <- "clusterSamplingGUI" ;
-    curSampleExplore <<- curSampleExplore %>% select(setdiff(colnames(curSampleExplore),"clusterSamplingGUI"))
+    # if("clusterSamplingGUI" %in% colnames(curSampleExplore) ) {
+    #   curSampleExplore <<- curSampleExplore %>% select(!clusterSamplingGUI)
+    # }
     curSampleExplore <<- curSampleExplore %>% 
       mutate(clusterSamplingGUI = clusterSamplingGUI)
     aesList[["clusterMethod"]][1] <<- "clusterSamplingGUI"
     bHOT <- ifelse(clusterSamplingGUI=="inside","Hot", "Normal")
-    attr(bHOT, "label") <- "bHOT" ;   attr(bHOT, "labelShort") <- "bHOT" ; 
+    # attr(bHOT, "label") <- "bHOT" ;   attr(bHOT, "labelShort") <- "bHOT" ; 
     curSampleExplore[,"bHOT"] <<- bHOT
+    curSampleExplore <<- 
+      attachAttrOneVar(curSampleExplore, var="bHOT", label="bHOT", labelShort="bHOT")
     curSampleExplore <<- sticky_all(curSampleExplore)
     
 

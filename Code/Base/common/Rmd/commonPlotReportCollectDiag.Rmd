@@ -1,0 +1,529 @@
+---
+title: "수집 진단 보고서"
+author: "뿌리산업 융합 솔루션팀"
+output:
+    flexdashboard::flex_dashboard:
+        orientation: rows
+        
+params:
+    pubDate: !r Sys.Date()
+    df: NA
+    aesList: NA
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale( "LC_ALL", "Korean_Korea.949")
+# Sys.setlocale( "LC_ALL", "C")
+knitr::opts_chunk$set(echo=FALSE)
+options(warn=-1)
+
+library(tidyverse)
+library(lubridate)
+library(htmltools)
+#library(ggplot2)
+#library(dplyr)
+library(reshape2)
+library(DT)
+library(broom)
+library(modelr)
+if(!library(ggiraph, logical.return=TRUE)) {
+    install.packages("ggiraph")
+    library(ggiraph)
+}
+
+if(!library(cowplot, logical.return=TRUE)) {
+    install.packages("cowplot")
+    library(cowplot)
+}
+
+
+### 내부 디버깅 ###
+# df <- DFSource
+
+### render용, 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+pathHTMLReport <- params$pathHTMLReport  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
+
+theme_update(axis.title=element_text(size=10))
+theme_update(axis.text=element_text(size=8))
+# theme_update(legend.text = element_text(size=8))
+
+extractNumVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  # catVar <- varNameVec[!booleanVec]
+  numVar <-  varNameVec[booleanVec]
+  return(numVar)
+}
+extractCatVarName <- function(df) {
+  # numeric variable 만 추출
+  varNameVec <- colnames(df)
+  func1 <- function(x) {
+    is.numeric(df[,x])
+  }
+  booleanVec <- vapply(varNameVec, func1, FUN.VALUE=logical(1))
+  catVar <- varNameVec[!booleanVec]
+  return(catVar)
+}
+ # df <- dfReportCommon
+aesList[["x"]] <- setdiff(aesList[["x"]], 
+                          c(aesList[["y"]], aesList[["size"]], aesList[["shape"]]))
+
+dfGraph <- as.data.frame(df[,aesList[["x"]]]) 
+
+# dfGraph <- as.data.frame(dfReportCommon[,aesList[["x"]]]) 
+# xxx <- stat_bin(data=dfGraph,aes(x=Ni))
+
+catVar <- intersect(aesList[["x"]],extractCatVarName(df))
+orderCatVarNoNA <- function(df, catVar) {
+  func1 <- function(varName,df) {
+    bNA <- is.na(df[,varName])
+    return(sum(bNA))
+    
+  }
+  vecNoNA <- vapply(catVar, func1, df, FUN.VALUE = integer(1) )
+  vecNoNA <- vecNoNA[order(vecNoNA, decreasing = TRUE )]
+  return(names(vecNoNA))
+}
+
+catVar <- orderCatVarNoNA(df, catVar)
+
+orderNumVarNoInvalid <- function(df, numVar) {
+  func1 <- function(varName,df) {
+    bNA <- is.na(df[,varName])
+    noNA <- sum(bNA)
+    noLowOB <- sum(df[,varName] < attr(df[,varName],"validMin"), na.rm=TRUE)
+    noHighOB <- sum(df[,varName] > attr(df[,varName],"validMax"), na.rm=TRUE)
+    noInvalid <- noNA + noLowOB + noHighOB
+    return(noInvalid)
+  }
+  vecNoInvalid <- vapply(numVar, func1, df, FUN.VALUE = integer(1) )
+  vecNoInvalid <- vecNoInvalid[order(vecNoInvalid, decreasing = TRUE )]
+  
+  return(names(vecNoInvalid))
+}
+
+numVar <- intersect(aesList[["x"]],extractNumVarName(df))
+numVar <- orderNumVarNoInvalid(df, numVar)
+
+```
+
+Inputs {.sidebar}
+=============================================
+
+
+Scatter Plot  
+ - [catVar1] page  
+ - [catVar2] page   
+ - [catVar3] page  
+ - [catVar4] page  
+ - [catVar5] page  
+ - [catVar6] page  
+ - [catVar7] page  
+ - [catVar8] page   
+ - [catVar9] page   
+ - [catVar10] page   
+ - [numVar1] page   
+ - [numVar12] page   
+ - [numVar13] page   
+ - [numVar14] page   
+ - [catVar15] page  
+ - [catVar16] page  
+ - [catVar17] page  
+ - [catVar18] page   
+ - [catVar19] page   
+ - [catVar20] page   
+ - [catVar21] page   
+ - [catVar22] page   
+ - [catVar23] page   
+ - [catVar24] page   
+ - [catVar25] page 
+ 
+   
+
+
+
+catVar1 {data-navmenu="Cat Var"}
+=============================================
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar1_1}
+renderTable <- function(varNo) {
+  if(!is.na(catVar[varNo])) {
+    caption <- paste0(catVar[varNo], ", ", attr(df[,catVar[varNo]],"labelShort"), ", ", attr(df[,catVar[varNo]],"label") )
+    zzz <- table(df[,catVar[varNo]], useNA="always") 
+    ddd <- as.vector(zzz)
+    ddd <- data.frame(noData=as.vector(zzz))
+    rownames <- attr(zzz,"dimnames")[[1]]
+    rownames[length(rownames)] <- "NA"
+    rownames(ddd) <- rownames
+    dfTable <- t(ddd)
+    knitr::kable(dfTable, caption=caption)
+  } 
+}
+
+renderTable(1)
+
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar1_2}
+renderTable(2)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar1_3}
+renderTable(3)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar1_4}
+renderTable(4)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar1_5}
+renderTable(5)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+catVar1, Publication Date : `r params$pubDate`
+
+
+catVar2 {data-navmenu="Cat Var"}
+=============================================
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar2_1}
+renderTable(6)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar2_2}
+renderTable(7)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar2_3}
+renderTable(8)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar2_4}
+renderTable(9)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar2_5}
+renderTable(10)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+catVar2, Publication Date : `r params$pubDate`
+
+catVar3 {data-navmenu="Cat Var"}
+=============================================
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar3_1}
+renderTable(11)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar3_2}
+renderTable(12)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar3_3}
+renderTable(13)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar3_4}
+renderTable(14)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar3_5}
+renderTable(15)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+catVar3, Publication Date : `r params$pubDate`
+
+
+catVar4 {data-navmenu="Cat Var"}
+=============================================
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar4_1}
+renderTable(16)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar4_2}
+renderTable(17)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar4_3}
+renderTable(18)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar4_4}
+renderTable(19)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar4_5}
+renderTable(20)
+```
+
+Row {data-height=20}
+---------------------------------------------
+catVar4, Publication Date : `r params$pubDate`
+
+catVar5 {data-navmenu="Cat Var"}
+=============================================
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar5_1}
+renderTable(21)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar5_2}
+renderTable(22)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar5_3}
+renderTable(23)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar5_4}
+renderTable(24)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar5_5}
+renderTable(25)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+catVar5, Publication Date : `r params$pubDate`
+
+
+catVar6 {data-navmenu="Cat Var"}
+=============================================
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar6_1}
+renderTable(26)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar6_2}
+renderTable(27)
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar6_3}
+renderTable(28)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar6_4}
+renderTable(29)
+```
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, catVar6_5}
+renderTable(30)
+```
+
+Row {data-height=20}
+---------------------------------------------
+catVar6, Publication Date : `r params$pubDate`
+
+
+
+numVar1 {data-navmenu="Num Var"}
+=============================================
+
+
+Row {data-height=20}
+---------------------------------------------
+
+### 
+```{r, numVar1_1}
+if(length(numVar)>0) {
+  dfNum <- df[,numVar]
+  noNA <- as.vector(colSums(is.na(dfNum)))
+  
+  dfTable <- data.frame(noNA=noNA)
+  dfTable <- dfTable %>% mutate(percentNA=round(100*noNA/dim(dfNum)[1],2))
+  
+  func1 <- function(varName) {
+    noLowOB <- sum(dfNum[,varName] < attr(dfNum[,varName],"validMin"), na.rm=TRUE)
+    return(noLowOB)
+  }
+  noLowOB <- vapply(numVar, func1, FUN.VALUE = numeric(1)) %>% as.vector()
+  dfTable <- cbind(dfTable,noLowOB) %>% mutate(percentLowOB=round(100*noLowOB/dim(dfNum)[1],2))
+  
+  validMinVec <- rep(0,dim(dfNum)[2])
+  for(i in seq(length(validMinVec))) {
+    validMinVec[i] <- attr(dfNum[,numVar[i]],"validMin")
+  }
+  dfTable <- cbind(dfTable,validMinVec)
+  
+  validMaxVec <- rep(0,dim(dfNum)[2])
+  for(i in seq(length(validMaxVec))) {
+    validMaxVec[i] <- attr(dfNum[,numVar[i]],"validMax")
+  }
+  dfTable <- cbind(dfTable,validMaxVec)
+  
+  func1 <- function(varName) {
+    noHighOB <- sum(dfNum[,varName] > attr(dfNum[,varName],"validMax"), na.rm=TRUE)
+    return(noHighOB)
+  }
+  noHighOB <- vapply(numVar, func1, FUN.VALUE = numeric(1)) %>% as.vector()
+  dfTable <- cbind(dfTable,noHighOB) %>% mutate(percentHighOB=round(100*noHighOB/dim(dfNum)[1],2))
+  dfTable <- dfTable %>% mutate(noInvalid=noNA + noLowOB + noHighOB, percentInvalid=round(100*noInvalid/dim(dfNum)[1],2))
+  rownames(dfTable) <- colnames(dfNum)
+  DT::datatable(dfTable)
+  
+}
+
+
+
+```
+
+
+Row {data-height=20}
+---------------------------------------------
+numVar1, Publication Date : `r params$pubDate`
+
+
+

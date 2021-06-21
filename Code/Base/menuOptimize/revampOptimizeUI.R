@@ -26,11 +26,11 @@ revampOptimizeUI <- function(input,output, session) {
     for(i in 1:length(OptimizeTableNames)) {
       inVarName <- paste0("OptimizeTable", tableNo,"Name", i) # 변수명
       html(id=inVarName, html=OptimizeTableLabel[i])
-      show(inVarName)
+      shinyjs::show(inVarName)
       inVar <- paste0("OptimizeTable", tableNo, "Cell",i)   # HTML ID
       value <- curOptimizeDF[1,OptimizeTableNames[i]]
       updateNumericInput(session, inVar, value=value)
-      show(inVar)
+      shinyjs::show(inVar)
     }
     
     
@@ -68,8 +68,7 @@ renderOptimizeUI_2 <- function() {
 
                       radioButtons("selCatOptimizeFewLevel1", 
                                          label="selCatFewLevel1", 
-                                         choiceNames = list("init1", "init2"), 
-                                         choiceValues = list("init1", "init2")),
+                                         choices = list("init1", "init2")),
                       radioButtons("selCatOptimizeFewLevel2", 
                                    label="selCatFewLevel1", 
                                    choiceNames = list("init1", "init2"), 
@@ -152,7 +151,7 @@ revampOptimizeUI_2 <- function(input,output, session) {
   for(i in seqNumber) {
     inVarName <- paste0("selCatOptimize",i) # 변수명
     html(inVarName, catVarWithModalOptimize[i] )
-    show(inVarName)
+    shinyjs::show(inVarName)
   }
   
   for(i in 1:10) {
@@ -166,14 +165,26 @@ revampOptimizeUI_2 <- function(input,output, session) {
     seqNumber <- 1:10
   }
   
+  # for(i in seqNumber) {
+  #   inVarName <- paste0("selCatOptimizeFewLevel",i) # 변수명
+  #   # html(inVarName, catVarWithoutModalOptimize[i] )
+  #   html(inVarName, "KKK")
+  #   updateRadioButtons(session, inVarName,
+  #                            label = catVarWithoutModalOptimize[i],
+  #                            choices = as.character(selCatOptimizeOptimize[[catVarWithoutModalOptimize[i]]])
+  #   )
+  #   shinyjs::show(inVarName)
+  # 
+  # }
+  
   for(i in seqNumber) {
     inVarName <- paste0("selCatOptimizeFewLevel",i) # 변수명
     html(inVarName, catVarWithoutModalOptimize[i] )
     updateRadioButtons(session, inVarName,
-                             label = catVarWithoutModalOptimize[i],
-                             choices = as.character(selCatOptimizeOptimize[[catVarWithoutModalOptimize[i]]])
+                       label = catVarWithoutModalOptimize[i], selected=NA,
+                       choices = as.character(selCatOptimizeOptimize[[catVarWithoutModalOptimize[i]]])
     )
-    show(inVarName)
+    shinyjs::show(inVarName)
   }
   
 }
@@ -249,6 +260,7 @@ updateCatVarOptimize <- function(input, output, session) {
 
   subFunc <- function(buttonNo) {
     curSelCatVar <<- catVarWithModalOptimize[buttonNo]
+    if(is.null(curSelCatVar)) return()
     strVec <- as.character(unique(curSampleExplore[,curSelCatVar]))
     strVec <- sort(strVec)
     selCatOptimizeOptimize[[curSelCatVar]] <- c(strVec)

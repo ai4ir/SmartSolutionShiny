@@ -22,18 +22,16 @@ exploreMainUI <- function() {
                  tabPanel("violin1", value="violin1",
                           violin1TabModuleUI("violin1")
                  ),
-                 tabPanel("bar1", value="bar1",
-                          bar1TabModuleUI("bar1")
+                 tabPanel("barCount", value="barCount",
+                          barCountTabModuleUI("barCount")
                  ),
                  tabPanel("histogram1", value="histogram1",
                           histogram1TabModuleUI("histogram1")
                  ),
-                 tabPanel("clustering", value="clustering",
-                          clusteringTabModuleUI("kmeans")
-                 ),
-                 tabPanel("cTree", value="cTree",
-                          cTreeTabModuleUI("cTree")
+                 tabPanel("density1", value="density1",
+                          density1TabModuleUI("density1")
                  )
+
                  # tabPanel("scatter2", value="scatter2",
                  #          scatter2TabModuleUI("scatter2")
                  # )
@@ -58,10 +56,9 @@ exploreMain <- function(input, output, session) {
     callModule(boxplot2TabModule,"boxplot2")
     callModule(boxplot3TabModule,"boxplot3")
     callModule(violin1TabModule,"violin1")
-    callModule(bar1TabModule,"bar1")
+    callModule(barCountTabModule,"barCount")
     callModule(histogram1TabModule,"histogram1")
-    callModule(clusteringTabModule,"kmeans")
-    callModule(cTreeTabModule,"cTree")
+    callModule(density1TabModule,"density1")
     # callModule(scatter2TabModule,"scatter2")
     
     observe({
@@ -87,7 +84,9 @@ exploreMain <- function(input, output, session) {
     observe({
         treatModalGraphOptionHistogram(input, output, session)
     })
-
+    observe({
+        treatModalGraphOptionDensity(input, output, session)
+    })
 
 }
 

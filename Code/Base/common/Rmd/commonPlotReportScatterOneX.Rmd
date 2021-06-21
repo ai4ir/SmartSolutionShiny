@@ -44,6 +44,11 @@ df <- params$df  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA �
 pathHTMLReport <- params$pathHTMLReport  ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
 aesList <- params$aesList ### 내부 디버깅시 코멘트 처리 필요, 안하면 NA 대입됨
 
+if(dim(df)[1]>10000) {
+  rndNo <- sample(1:dim(df)[1], 10000, replace=FALSE)
+  df <- df[rndNo,]
+}
+
 theme_update(axis.title=element_text(size=10))
 theme_update(axis.text=element_text(size=8))
 # theme_update(legend.text = element_text(size=8))

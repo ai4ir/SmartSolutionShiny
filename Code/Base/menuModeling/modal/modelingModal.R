@@ -51,7 +51,7 @@ ModalModeling <- function(failed = FALSE) {
     
     
     footer = tagList(
-      modalButton("Cancel"),
+      actionButton("cancelModalModeling",  "Cancel"),
       actionButton("okModalModeling", "OK")
     ),
     size="l"
@@ -59,14 +59,22 @@ ModalModeling <- function(failed = FALSE) {
 }
 
 treatModalModeling <- function(input, output, session) {
+  
+  observeEvent(input$cancelModalModeling, {
+    removeModal()
+    shinyjs::toggle("renderReportModeling") 
+  })
 
   observeEvent(input$okModalModeling, {
     withProgress(message="Common Plot Report Progress", value=0, {
       selCluster <- input$selModel
       selRow <- dfModelNest[dfModelNest$clusterGr==selCluster,]
+      algorithmML <- dfModelNest[["algorithmML"]]
       selModel <<- selRow[["model"]][[1]]
       numVar <- extractNumVarName(curSampleExplore)
       aesList[["x"]] <<- intersect(numVar, dfModelNest$modelDirectRaw[[1]])
+      
+
       
 
 
@@ -74,7 +82,7 @@ treatModalModeling <- function(input, output, session) {
       ### 내부 디버깅 ###
       # selCluster <- "HSLA"
       ### 내부 디버깅 ###
-      params <- list(df=curSampleExplore, selModel=selModel, aesList=aesList)
+      params <- list(df=dfReportCommon, selModel=selModel,algorithmML=algorithmML, aesList=aesList)
       outputFileName <- paste0("reportModel.html")
       
       switch(input$selModelResultReport,
@@ -84,21 +92,23 @@ treatModalModeling <- function(input, output, session) {
                options(warn=-1)
                pathFileRmdModel <- "Base/menuModeling/Rmd/modelingVerifyReport.Rmd"
                rmarkdown::render(pathFileRmdModel, output_file = outputFileName,
-                                 output_dir = pathHTMLReport,
+                                 output_dir = pathHTMLReportModelVerify,
                                  params = params,
                                  envir = new.env(parent = globalenv()), encoding="UTF-8")
-               file.rename(paste0(pathHTMLReport,"/",outputFileName), paste0(pathHTMLReport,"/",outputFileFinalName))
+               file.rename(paste0(pathHTMLReportModelVerify,"/",outputFileName), paste0(pathHTMLReportModelVerify,"/",outputFileFinalName))
             },
             verifyModelwPred = {
               outputFileFinalName <- paste0("모델링 검증 리포트_예측변수_", chosenDFSourceFile,"_",
-                                            selCluster, ".html")
+                                            selCluster,"_",dim(dfReportCommon)[1],"_",dim(dfReportCommon)[2], ".html")
+              file.remove(paste0(pathHTMLReportModelVerify,"/",outputFileFinalName))
               options(warn=-1)
               pathFileRmdModel <- "Base/menuModeling/Rmd/modelingVerifyReportwPred.Rmd"
               rmarkdown::render(pathFileRmdModel, output_file = outputFileName,
-                                output_dir = pathHTMLReport,
+                                output_dir = pathHTMLReportModelVerify,
                                 params = params,
                                 envir = new.env(parent = globalenv()), encoding="UTF-8")
-              file.rename(paste0(pathHTMLReport,"/",outputFileName), paste0(pathHTMLReport,"/",outputFileFinalName))
+
+              file.rename(paste0(pathHTMLReportModelVerify,"/",outputFileName), paste0(pathHTMLReportModelVerify,"/",outputFileFinalName))
             },
             verifyModelwoPred = {
               outputFileFinalName <- paste0("모델링 검증 리포트_미예측 변수_", chosenDFSourceFile,"_",
@@ -106,10 +116,10 @@ treatModalModeling <- function(input, output, session) {
               options(warn=-1)
               pathFileRmdModel <- "Base/menuModeling/Rmd/modelingVerifyReportwoPred.Rmd"
               rmarkdown::render(pathFileRmdModel, output_file = outputFileName,
-                                output_dir = pathHTMLReport,
+                                output_dir = pathHTMLReportModelVerify,
                                 params = params,
                                 envir = new.env(parent = globalenv()), encoding="UTF-8")
-              file.rename(paste0(pathHTMLReport,"/",outputFileName), paste0(pathHTMLReport,"/",outputFileFinalName))
+              file.rename(paste0(pathHTMLReportModelVerify,"/",outputFileName), paste0(pathHTMLReportModelVerify,"/",outputFileFinalName))
             },
             domainModel = {
               outputFileFinalName <- paste0("모델링 도메인 리포트_", chosenDFSourceFile,"_",
@@ -117,10 +127,10 @@ treatModalModeling <- function(input, output, session) {
               options(warn=-1)
               pathFileRmdModel <- "Base/menuModeling/Rmd/modelingDomainReport.Rmd"
               rmarkdown::render(pathFileRmdModel, output_file = outputFileName,
-                                output_dir = pathHTMLReport,
+                                output_dir = pathHTMLReportModelVerify,
                                 params = params,
                                 envir = new.env(parent = globalenv()), encoding="UTF-8")
-              file.rename(paste0(pathHTMLReport,"/",outputFileName), paste0(pathHTMLReport,"/",outputFileFinalName))
+              file.rename(paste0(pathHTMLReportModelVerify,"/",outputFileName), paste0(pathHTMLReportModelVerify,"/",outputFileFinalName))
               
               
             }
@@ -131,44 +141,45 @@ treatModalModeling <- function(input, output, session) {
 
     }) #withProgress(message="리포트 작성중", value=0, {
     
-    strAlert <- paste0(pathHTMLReport,"에 ", outputFileFinalName,"이 저장되었습니다.")
+    strAlert <- paste0(pathHTMLReportModelVerify,"에 ", outputFileFinalName,"이 저장되었습니다.")
     alert(strAlert)
 
     removeModal()
+    shinyjs::toggle("renderReportModeling")  
   })
   
   observeEvent(input$selModelResultReport, {
     switch(input$selModelResultReport,
            verifyModel = {
-             show("MCP_color")
-             show("MCP_size")
-             show("MCP_shape")
-             show("MCP_tooltip")
-             show("MCP_data_id")
+             shinyjs::show("MCP_color")
+             shinyjs::show("MCP_size")
+             shinyjs::show("MCP_shape")
+             shinyjs::show("MCP_tooltip")
+             shinyjs::show("MCP_data_id")
              curSelModelResultReport <<- "verifyModel"
            },
            verifyModelwPred = {
-             show("MCP_color")
-             show("MCP_size")
-             show("MCP_shape")
-             show("MCP_tooltip")
-             show("MCP_data_id")
+             shinyjs::show("MCP_color")
+             shinyjs::show("MCP_size")
+             shinyjs::show("MCP_shape")
+             shinyjs::show("MCP_tooltip")
+             shinyjs::show("MCP_data_id")
              curSelModelResultReport <<- "verifyModelwPred"
            },
            verifyModelwoPred = {
-             show("MCP_color")
-             show("MCP_size")
-             show("MCP_shape")
-             show("MCP_tooltip")
-             show("MCP_data_id")
+             shinyjs::show("MCP_color")
+             shinyjs::show("MCP_size")
+             shinyjs::show("MCP_shape")
+             shinyjs::show("MCP_tooltip")
+             shinyjs::show("MCP_data_id")
              curSelModelResultReport <<- "verifyModelwoPred"
            },
            domainModel = {
-             show("MCP_color")
-             show("MCP_size")
-             show("MCP_shape")
-             show("MCP_tooltip")
-             show("MCP_data_id")
+             shinyjs::show("MCP_color")
+             shinyjs::show("MCP_size")
+             shinyjs::show("MCP_shape")
+             shinyjs::show("MCP_tooltip")
+             shinyjs::show("MCP_data_id")
              curSelModelResultReport <<- "domainModel"
            }
       )

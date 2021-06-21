@@ -86,16 +86,21 @@ histogram1TabModule <- function(input, output, session) {
             ggObj <- ggplot(data=curSampleExplore,
                                aes_string(x=aesList[["x"]][1])) +
             geom_histogram() +
-            # geom_jitter() +
-            # xlim(graphOption[["minX"]][1], graphOption[["maxX"]][1]) +
-            # ylim(graphOption[["minY"]][1], graphOption[["maxY"]][1]) +
             # guides(color = guide_legend(override.aes = list(size = 10))) +
             labs(title=paste0(sourcingCat,"  ",chosenDFSourceFile),
                  x=graphOption[["xAxisTitle"]][1]) +
-            theme(legend.title = element_text(size = 40),
+            theme(axis.text=element_text(size=30), axis.title=element_text(size=40),
+                legend.title = element_text(size = 40),
                   legend.text  = element_text(size = 25),
                   legend.key.size = unit(0.1, "lines"))
             
+            if(!is.na(graphOption[["minX"]][1]) & !is.na(graphOption[["maxX"]][1]))
+              ggObj <- ggObj + xlim(graphOption[["minX"]][1],graphOption[["maxX"]][1]) 
+            if(!is.na(graphOption[["minX"]][1]) & is.na(graphOption[["maxX"]][1]))
+                ggObj <- ggObj + xlim(graphOption[["minX"]][1],NA) 
+            if(is.na(graphOption[["minX"]][1]) & !is.na(graphOption[["maxX"]][1]))
+                ggObj <- ggObj + xlim(NA,graphOption[["maxX"]][1]) 
+
             if( x %in% names(MinReqExplore) && !is.na(MinReqExplore[x])) 
                 ggObj <- ggObj + geom_vline(xintercept=MinReqExplore[x])
             if( x %in% names(MaxReqExplore) && !is.na(MaxReqExplore[x])) 

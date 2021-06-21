@@ -35,9 +35,9 @@ scatter1TabModuleUI <- function(Id) {
             ),
             column(1, actionButton(ns("MCP_shape"), label="shape 변수 선정") 
             ),
-            column(1, numericInput(ns("MCP_pointSize"), label="심볼 사이즈 변경", value=3, min=1, max=6, step=1) 
+            column(1, numericInput(ns("MCP_pointSize"), label="심볼 사이즈", value=3, min=1, max=6, step=1) 
             ),
-            column(1, numericInput(ns("MCP_positionJitter"), label="jitter 변경", value=0, min=0, max=0.1, step=0.01) 
+            column(1, numericInput(ns("MCP_positionJitter"), label="jitter", value=0, min=0, max=0.1, step=0.01) 
             ),
             column(2, actionButton(ns("modalGraphOption"), label="그래프 옵션 선정") 
             ),
@@ -114,6 +114,7 @@ scatter1TabModule <- function(input, output, session) {
                 choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
             }
         }
+
         curAes <<- "color"
         showModal(ModalRadioButtons(choiceNames=choiceNames, var, ns("okNext"), "color 변수",
                                     strExplain="color 변수를 선정하세요",
@@ -129,8 +130,14 @@ scatter1TabModule <- function(input, output, session) {
         
         choiceNames <- "NULL"
         for(i in 2:length(var)) {
-            choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
+            if(is.null(attr(curSampleExplore[,var[i]],"labelShort") )) {
+                choiceNames <- c(choiceNames,paste0("임시 라벨 ", i))
+            } else {
+                choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
+            }
         }
+        
+
 
         curAes <<- "size"
         showModal(ModalRadioButtons(choiceNames=choiceNames, var, ns("okNext"), "size 변수",
@@ -151,8 +158,12 @@ scatter1TabModule <- function(input, output, session) {
 
         choiceNames <- "NULL"
         for(i in 2:length(var)) {
-            choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
-        }       
+            if(is.null(attr(curSampleExplore[,var[i]],"labelShort") )) {
+                choiceNames <- c(choiceNames,paste0("임시 라벨 ", i))
+            } else {
+                choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
+            }
+        }      
 
 
         strExplain <- "수준이 2이상 7 이하인 변수만 선택됬습니다."
@@ -168,15 +179,31 @@ scatter1TabModule <- function(input, output, session) {
     })
     
     observeEvent(input$graphUpdate, {
+        # shinyjs::toggle("readSource")
         theme_update(axis.title=element_text(size=aesList[["axisTitleSize"]][1]))
         theme_update(axis.text=element_text(size=aesList[["axisTextSize"]][1]))
-        dfGraph <- curSampleExplore
+
         x <- aesList[["x"]][1]
         y <- aesList[["y"]][1]
         color <- aesList[["color"]][1]
         size <- aesList[["size"]][1]
         shape <- aesList[["shape"]][1]
+        varName <- unique(c(x,y,color,size,shape))
+        dfGraph <- curSampleExplore[,varName]  
+        if(globalOptionSS[["graphDataValid"]]=="valid") {
+             dfGraph <- validateDF(dfGraph, varName)
+        }
         
+        dfGraph <- dfGraph[complete.cases(dfGraph),]
+        
+
+        
+        graphOption[["minX"]][1] <<- min(dfGraph[,aesList[["x"]][1]], na.rm=TRUE)
+        graphOption[["maxX"]][1] <<- max(dfGraph[,aesList[["x"]][1]], na.rm=TRUE)
+        graphOption[["minY"]][1] <<- min(dfGraph[,aesList[["y"]][1]], na.rm=TRUE)
+        graphOption[["maxY"]][1] <<- max(dfGraph[,aesList[["y"]][1]], na.rm=TRUE)
+        
+
         dfGraph[,size] <- as.factor(dfGraph[,size])
         dfGraph[,shape] <- as.factor(dfGraph[,shape])
         if(!is.null(color) && !is.factor(dfGraph[,color])  && length(unique(dfGraph[,color])) < 21 && x!=color) {
@@ -200,9 +227,15 @@ scatter1TabModule <- function(input, output, session) {
             dfModel <- dfGraph[,c(x, y)]
             colnames(dfModel) <- c("xVec", "yVec")
             switch(aesList[["fitOption"]],
-                   NoFit = {},
+                   NoFit = {
+                       upDown <- rep("notKnown",dim(dfModel)[1])
+                       # upDown <- rep("notKnown",dim(curSampleExplore)[1])
+
+                   },
                    Fit1 = {
                        model <- lm(yVec ~ xVec,data=dfModel)
+                       dfModel <- dfModel %>% add_predictions(model, var="predYFit")
+                       upDown <- ifelse(dfModel$yVec > dfModel$predYFit , "Up", "Down")
                        myfunc <- function(x) {
                            model[["coefficients"]][1] + model[["coefficients"]][2] * x 
                        }
@@ -214,6 +247,8 @@ scatter1TabModule <- function(input, output, session) {
                    Fit2 = {
                        dfModel <- dfModel %>% mutate(xVec2 = xVec * xVec)
                        model <- lm(yVec ~ xVec + xVec2,data=dfModel)
+                       dfModel <- dfModel %>% add_predictions(model, var="predYFit")
+                       upDown <- ifelse(dfModel$yVec > dfModel$predYFit , "Up", "Down")
                        myfunc <- function(x) {
                            model[["coefficients"]][1] + model[["coefficients"]][2] * x + model[["coefficients"]][3]*x*x
                        }
@@ -223,8 +258,36 @@ scatter1TabModule <- function(input, output, session) {
                            0.8*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
                        
                    },
+                   Fit3 = {
+                       dfModel <- dfModel %>% mutate(xVec2 = xVec * xVec, xVec3=xVec2*xVec)
+                       model <- lm(yVec ~ xVec + xVec2 + xVec3,data=dfModel)
+                       dfModel <- dfModel %>% add_predictions(model, var="predYFit")
+                       upDown <- ifelse(dfModel$yVec > dfModel$predYFit , "Up", "Down")
+                       myfunc <- function(x) {
+                           model[["coefficients"]][1] + model[["coefficients"]][2] * x + model[["coefficients"]][3]*x*x + model[["coefficients"]][4]*x*x*x
+                       }
+                       R2 <- broom::glance(model)[["r.squared"]]
+                       labelAnnotate <- paste0("R2 : ", round(R2,3))
+                       xAnnotate <-  min(dfGraph[,x],na.rm=TRUE) +
+                           0.8*(max(dfGraph[,x],na.rm=TRUE)-min(dfGraph[,x],na.rm=TRUE))
+                       
+                   },
                    {}
             )
+            
+            attr(upDown, "label") <- "clusterFit UpDown" ; attr(upDown, "labelShort") <- "clusterFit UpDown" ; 
+            attr(upDown, "validMin") <- NA ; attr(upDown, "validMax") <- NA ;  
+            if(globalOptionSS[["graphDataValid"]]=="valid") {
+                curSampleExplore <<- validateDF(curSampleExplore,varName) %>% 
+                    mutate(clusterFit = upDown) %>% sticky_all()
+                curSampleExplore <<- curSampleExplore[complete.cases(dfGraph),]
+            }
+
+
+            # bHOT <- ifelse(upDown=="Up","Hot", "Normal")
+            # attr(bHOT, "label") <- "bHOT" ;   attr(bHOT, "labelShort") <- "bHOT" ; 
+            # curSampleExplore[,"bHOT"] <<- bHOT
+            # curSampleExplore <<- sticky_all(curSampleExplore)
             
         }
         
@@ -268,7 +331,6 @@ scatter1TabModule <- function(input, output, session) {
                      x=graphOption[["xAxisTitle"]][1], y=graphOption[["yAxisTitle"]][1]) +
                 theme(legend.title = element_text(size = 40),
                       legend.text  = element_text(size = 25)
-                      # legend.key.size = unit(0.1, "lines"))
                 )      
             if(!is.null(MinReqExplore)) {
                 if( !is.na(MinReqExplore[y]) && y %in% names(MinReqExplore)) 
@@ -304,7 +366,7 @@ scatter1TabModule <- function(input, output, session) {
             
             ggObj
         })
-        
+        # shinyjs::toggle("readSource") 
     })
     
     observeEvent(input$modalGraphOption, {

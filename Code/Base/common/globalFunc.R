@@ -153,8 +153,7 @@ resetLevelsCatVar <- function(df, dfDomainCat, catVar) {
   for(i in seq_along(catVar)) {
     # i <- 1
     if(is.factor(df[,catVar[i]][[1]])) {
-      dfDomainCat[[catVar[i]]] <-
-        attr(df[,catVar[i]][[1]], "levels")
+      dfDomainCat[[catVar[i]]] <- as.character(unique(df[,catVar[i]]))
     } else {
       dfDomainCat[[catVar[i]]] <-
         as.character(unique(as.data.frame(df)[,catVar[i]])) %>% sort()  ### sort하면 NA가 제거됨

@@ -116,16 +116,18 @@ boxplot2TabModule <- function(input, output, session) {
         reactAesList(aesList)
         theme_update(axis.title=element_text(size=graphOption[["axisTitleSize"]][1]))
         theme_update(axis.text=element_text(size=graphOption[["axisTextSize"]][1]))
-        dfGraph <- curSampleExplore
-        
+
         x <- aesList[["x"]][1]
         y <- aesList[["y"]][1]
         color <- aesList[["color"]][1]
+        varName <- unique(c(x,y,color))
+        dfGraph <- curSampleExplore[,varName]  
+        if(globalOptionSS[["graphDataValid"]]=="valid") {
+            dfGraph <- validateDF(dfGraph)
+        }
         
         dfGraph[,x] <- as.factor(dfGraph[,x])
 
-        
-        
         if(!is.numeric(dfGraph[,x]) & 
            length(unique(dfGraph[,x])) > 6 )
         {
@@ -136,27 +138,24 @@ boxplot2TabModule <- function(input, output, session) {
                                   dfGraph[,x], "기타"
             )
         }
-        
-        output$plot1 <- renderPlot({
-            
-             # ggplot(data=dfGraph,
-             #                aes_string(x=x, y=y,
-             #                           group=aesList[["color"]][1], color=aesList[["color"]][1]) ) +
-             #    geom_boxplot()
 
+        output$plot1 <- renderPlot({
+
+            # ggplot(data=dfGraph,
+            #                aes_string(x=x, y=y,
+            #                           group=aesList[["color"]][1], color=aesList[["color"]][1]) ) +
+            #    geom_boxplot()
+            
             ggObj <- ggplot(data=dfGraph,
-                               aes_string(x=x, y=y,
-                                          color=aesList[["color"]][1])) +
-            geom_boxplot() +
-            # geom_jitter() +
-            # xlim(graphOption[["minX"]][1], graphOption[["maxX"]][1]) +
-            # ylim(graphOption[["minY"]][1], graphOption[["maxY"]][1]) +
-            # guides(color = guide_legend(override.aes = list(size = 10))) +
-            labs(title=paste0(sourcingCat,"  ",chosenDFSourceFile),
-                 x=graphOption[["xAxisTitle"]][1], y=graphOption[["yAxisTitle"]][1]) +
-            theme(legend.title = element_text(size = 40),
-                  legend.text  = element_text(size = 25))
-                  # legend.key.size = unit(0.1, "lines"))
+                            aes_string(x=x, y=y,
+                                       color=aesList[["color"]][1])) + geom_boxplot() 
+            ggObj <- ggObj +
+                labs(title=paste0(sourcingCat,"  ",chosenDFSourceFile),
+                     x=graphOption[["xAxisTitle"]][1], y=graphOption[["yAxisTitle"]][1],
+                     fill=attr(dfGraph[,fill],"labelShort")) +
+                theme(legend.title = element_text(size = 40),
+                      legend.text  = element_text(size = 25))
+            # legend.key.size = unit(0.1, "lines"))
             
             if( y %in% names(MinReqExplore) && !is.na(MinReqExplore[y])) 
                 ggObj <- ggObj + geom_hline(yintercept=MinReqExplore[y])

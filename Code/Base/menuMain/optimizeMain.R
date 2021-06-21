@@ -7,12 +7,17 @@ optimizeMainUI <- function() {
                               fluidRow(
                                   column(1, actionButton("fileOptimize", "파일")),
                                   column(1, actionButton("doPredictOptim", "예측값 갱신")),
-                                  column(1, h3(textOutput("PredResultOptim"))),
-                                  column(2, h3(textOutput("PredResultFailOptim"))),
+                                  column(3, h3(textOutput("PredResultOptim"))),
+                                  # column(2, h3(textOutput("PredResultFailOptim"))),
                                   column(1, actionButton("doOptimize", "최적값 갱신")),
                                   column(1, h3("Y 목표값")),
                                   column(5, inlineCSS("#targetVarValue {font-size: 20px;}"),
                                          numericInput("targetVarValue", NULL, value=0))
+                              ),
+                              fluidRow(
+                                column(2),
+                                column(10, h3(textOutput("PredResultFailOptim")))
+
                               ),
                               tags$hr(),
                               fluidRow(
@@ -33,7 +38,7 @@ optimizeMainUI <- function() {
 optimizeMain <- function(input, output, session) {
   
   observeEvent(input$optimize, {
-    curTabPredict <<- input$optimize
+    curTabOptimize <<- input$optimize
 
   })
   
@@ -116,56 +121,25 @@ optimizeMain <- function(input, output, session) {
   })
   
   output$PredResultOptim <- renderText({
-    str <- paste0("예측값 : ",
-                  round(reactPredValOpt(),attr(DFSource[,which(attr(DFSource,"names")=="predVal")],"digit")) )
-    str
+    # str <- paste0("예측값 : ",
+    #               round(reactPredValOpt(),attr(DFSource[,which(attr(DFSource,"names")=="predVal")],"digit")) )
+    # str
+    predVal <- req(reactPredValOpt())
+    strPred <- predVal %>% renderStrPred()
+    strPred
     
   })
   
   output$PredResultFailOptim <- renderText({
     predVal <- req(reactPredValOpt())
-    std <- 12
     
-    modelY <- dfModelNest[["modelY"]][[1]]
+    strFailRatio <- renderStrFailRatio(predVal)
+    
+    strFailRatio
 
-    if(is.null(MinReqExplore[modelY])) {
-      failPercentUnderReq <- 0.0
-    } else {
-      zMin <- (MinReqExplore[modelY] - predVal) / 12
-      failPercentUnderReq <- round(100 * pnorm(zMin),2)
-    }
+  })
+  
 
-    if(is.null(MaxReqExplore[modelY])) {
-      failPercentOverReq <- 0.0
-    } else {
-      zMax <- (MaxReqExplore[modelY] - predVal) / 12
-      failPercentOverReq <- round(100 * pnorm(zMax, lower.tail=FALSE),2)
-    }
-    percentInside <- round(100 - failPercentUnderReq - failPercentOverReq, 2)
-    str <- paste0(failPercentUnderReq,"%, ", MinReqExplore[modelY], "MPa, ", 
-                  percentInside, "%, ", MaxReqExplore[modelY], "MPa, ",
-                  failPercentOverReq, "%"
-    )
-    # print(paste0("output$PredResultFailOptom - str :", str))
-    str
-  })
-  
-  observeEvent(input$renderReportSampling, {
-    # showModal(ModalCheckboxGroup(outputFileNamesSamplingReport, outputFileNamesSamplingReport,
-    #                              "okModalReportSampling"))
-    showModal(ModalCheckboxGroup(title="리포트 선정 대화창", modalCheckboxID="ModalCheckboxGroup", label="리포트 선정",
-                                 choiceNames=outputFileFinalNamesSamplingReport, choiceValues=outputFileNamesSamplingReport,
-                                 modalOKButtonID="okModalReportSampling"))
-  })
-  
-  observeEvent(input$okModalReportSampling, {
-    # params <- list(DFSource=curSampleExplore, MaxDomainExplore=MaxDomainExplore, MinDomainExplore=MinDomainExplore)
-    DFSourceRmd <- curSampleExplore %>% select(-c(sampleCode, bHOT, clusterGr))
-    params <- list(DFSource=DFSourceRmd, pathHTMLReport=pathHTMLReport)
-    renderReportCheckboxGroup(input, output, session, params, outputFileNamesSamplingReport, outputFileFinalNamesSamplingReport,
-                              pathFileRmdSamplingReport, pathHTMLReport)
-  })
-  
   # 범용 리포트
   # observeEvent(input$renderReportCommonSample, {
   #   dfReportCommon <<- curSampleExplore

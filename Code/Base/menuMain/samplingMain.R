@@ -6,7 +6,7 @@ samplingMainUI <- function() {
                           fluidPage(
                               fluidRow(
                                   column(1, actionButton("fileDomain", "파일") ),
-                                  column(1, actionButton("renderReportSampling", "리포트") ),
+                                  column(1, actionButton("renderReportSampling", "두께 리포트") ),
                                   column(1, actionButton("renderReportCommonSample", "탐색 리포트") ),
                                   column(1, actionButton("domainFromSource", "소스 도메인")),
                                   column(1, actionButton("clearSampleCond", "샘플 조건 제거")),
@@ -25,7 +25,7 @@ samplingMainUI <- function() {
                                          dateRangeInput('dateRange1',
                                                         label = 'Date range input: yyyy-mm-dd',
                                                         # start = Sys.Date() - 2, end = Sys.Date() + 2
-                                                        start = ymd("2020-01-01"), end = Sys.Date() + 2
+                                                        start = ymd("2000-01-01"), end = Sys.Date() + 2
                                          ),
                                          renderDomainUI_2()
                                          ),
@@ -69,7 +69,7 @@ samplingMain <- function(input, output, session) {
   observeEvent(reactDFSource(),{
 
     # 샘플링 조건 탭의 입력 위젯 처리
-    if(input$source == "EXCEL") renderAttrSamplingUI()
+    if(input$sourceDataOrModel == "EXCEL") renderAttrSamplingUI()
     revampDomainUI(input, output, session)
     revampDomainUI_2(input, output, session)
 
@@ -86,6 +86,14 @@ samplingMain <- function(input, output, session) {
   observeEvent(input$okModalReportSampling, {
     # params <- list(DFSource=curSampleExplore, MaxDomainExplore=MaxDomainExplore, MinDomainExplore=MinDomainExplore)
     DFSourceRmd <- curSampleExplore %>% select(-c(sampleCode, bHOT, clusterGr))
+    DFSourceRmd <- DFSourceRmd[DFSourceRmd$pathFile!="",]  ### for SRW
+    noData <- NROW(DFSourceRmd)
+    if(noData==0) {
+      alert(paste0("두께 프로파일이 하나도 없습니다.  Sourcing부터 다시 하십시요"))  
+      
+    } else {
+      alert(paste0("남기기가 완료되었습니다.  ",noData,"개의 두께 프로파일이 있습니다."))  
+    }
     params <- list(DFSource=DFSourceRmd, pathHTMLReport=pathHTMLReport)
     renderReportCheckboxGroup(input, output, session, params, outputFileNamesSamplingReport, outputFileFinalNamesSamplingReport,
                               pathFileRmdSamplingReport, pathHTMLReport)
@@ -128,10 +136,42 @@ samplingMain <- function(input, output, session) {
   })
   
   observeEvent(input$validateDF, {
-    curSampleExplore <<- validateDF(DFSource, attr(DFSource,"validMax"), attr(DFSource,"validMin")) 
+    
+    removeVar <- NA
+    var <- setdiff(colnames(curSampleExplore),removeVar) 
+    var <- c("ALL.ALL",var)
+    choiceNames <- "All.ALL"
+    for(i in 2:length(var)) {
+      choiceNames <- c(choiceNames, attr(curSampleExplore[,var[i]],"labelShort") )
+    }
+    
+    showModal(ModalCheckboxGroup(title="유효성 검사 Var 선정 대화창", modalCheckboxID="selValidateVarModal",
+                                 label="유효성 검사 Var 선정",
+                                 choiceNames=choiceNames, choiceValues=var,
+                                 selected=NULL,
+                                 modalOKButtonID="okValidateVarModal"))
+
+  })
+  
+  observeEvent(input$okValidateVarModal, {
+    varX <- input$selValidateVarModal 
+    
+    if(varX[1]=="ALL.ALL") {
+      removeVar <- NA
+      varX <- setdiff(colnames(curSampleExplore),removeVar) 
+      # varX <<- setdiff(selVar,varX[2:length(varX)])
+
+    } 
+    
+    curSampleExplore <<- validateDF(curSampleExplore, varX) 
     noData <- NROW(curSampleExplore)
     alert(paste0("유효 데이터만 남았습니다.  ",noData,"개의 데이타가 있습니다."))
+    
+    removeModal()
+    
   })
+  
+  
   
   observeEvent(input$expandCurSampleExplore, {
     # catVar <- c(catVarWithoutModal, catVarWithModal)
@@ -258,7 +298,8 @@ samplingMain <- function(input, output, session) {
 
     observeEvent(input$saveModalFileDomain, {
         getDomainExplore(input, output, session)
-        namePathFile <- paste0(pathNameFileDomain,"/", input$selNameFileDomain)
+        # namePathFile <- paste0(pathNameFileDomain,"/", input$selNameFileDomain)
+        namePathFile <- file.path(pathNameFileDomain,input$selNameFileDomain)
         save(MinDomainExplore, MaxDomainExplore, file=namePathFile)
         removeModal()
         # curPathNameFileDomain <<- namePathFile

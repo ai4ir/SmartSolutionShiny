@@ -25,11 +25,11 @@ revampDesignUI <- function(input,output, session) {
     for(i in 1:length(DesignTableNames)) {
       inVarName <- paste0("DesignTable", tableNo,"Name", i) # 변수명
       html(id=inVarName, html=DesignTableLabel[i])
-      show(inVarName)
+      shinyjs::show(inVarName)
       inVar <- paste0("DesignTable", tableNo, "Cell",i)   # HTML ID
       value <- curDesignDF[1,DesignTableNames[i]]
       updateNumericInput(session, inVar, value=value)
-      show(inVar)
+      shinyjs::show(inVar)
     }
     
     
@@ -65,10 +65,13 @@ renderDesignUI_2 <- function() {
                column(4,
                       # p("채취 위치 :"),
 
+                      # radioButtons("selCatPredictFewLevel1", 
+                      #                    label="selCatFewLevel1", 
+                      #                    choiceNames = list("init1", "init2"), 
+                      #                    choiceValues = list("init1", "init2")),
                       radioButtons("selCatPredictFewLevel1", 
-                                         label="selCatFewLevel1", 
-                                         choiceNames = list("init1", "init2"), 
-                                         choiceValues = list("init1", "init2")),
+                                   label="selCatFewLevel1", 
+                                   choices = list("init1", "init2")),
                       radioButtons("selCatPredictFewLevel2", 
                                    label="selCatFewLevel1", 
                                    choiceNames = list("init1", "init2"), 
@@ -151,7 +154,7 @@ revampDesignUI_2 <- function(input,output, session) {
   for(i in seqNumber) {
     inVarName <- paste0("selCatPredict",i) # 변수명
     html(inVarName, catVarWithModalPredict[i] )
-    show(inVarName)
+    shinyjs::show(inVarName)
   }
   
   for(i in 1:10) {
@@ -169,10 +172,10 @@ revampDesignUI_2 <- function(input,output, session) {
     inVarName <- paste0("selCatPredictFewLevel",i) # 변수명
     html(inVarName, catVarWithoutModalPredict[i] )
     updateRadioButtons(session, inVarName,
-                             label = catVarWithoutModalPredict[i],
+                             label = catVarWithoutModalPredict[i], selected=NA,
                              choices = as.character(selCatDesignPredict[[catVarWithoutModalPredict[i]]])
     )
-    show(inVarName)
+    shinyjs::show(inVarName)
   }
   
 }

@@ -7,10 +7,10 @@ orderVFcluster <- function(df) {
   # df <- curSampleExplore
 
   if(is.na(aesList[["clusterMethod"]][1])) {
-    numVar <- extractContVarName(df)
-    pValue <- rep(1, times=length(numVar) )
+    contVar <- extractContVarName(df)
+    pValue <- rep(1, times=length(contVar) )
     orderedVF <- data.frame(pValue)
-    rownames(orderedVF) <- numVar
+    rownames(orderedVF) <- contVar
     return(orderedVF)
   }
   
